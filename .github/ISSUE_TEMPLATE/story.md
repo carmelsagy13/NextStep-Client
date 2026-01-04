@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-### User Story
+### Description
 As a [type of user], I want [some goal] so that [some reason].
 
 ### What needs to be done

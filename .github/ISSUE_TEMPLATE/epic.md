@@ -1,6 +1,6 @@
 ---
-name: a new epic
-about: Epic
+name: Epic
+about: A new epic
 title: ''
 labels: ''
 assignees: ''
