@@ -1,5 +1,5 @@
 ---
-name: Epic
+name: a new epic
 about: Epic
 title: ''
 labels: ''
