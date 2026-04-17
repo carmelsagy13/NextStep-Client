@@ -1,33 +1,117 @@
-import { Routes, Route, Link } from 'react-router-dom';
-import AuthTest from './pages/AuthTest';
-import QuestionnaireTest from './pages/QuestionnaireTest';
-import OpenFinanceTest from './pages/OpenFinanceTest';
-import LlmTest from './pages/LlmTest';
-import DataTest from './pages/DataTest';
+import { useState, type FormEvent } from 'react';
 
-const navStyle: React.CSSProperties = {
-  display: 'flex', gap: 12, padding: 12,
-  borderBottom: '1px solid #ccc', marginBottom: 16, flexWrap: 'wrap',
-};
+const API_URL = 'http://localhost:3000/auth/register';
 
 function App() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [responseText, setResponseText] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setResponseText('');
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const rawBody = await response.text();
+      let parsedBody: unknown = rawBody;
+
+      try {
+        parsedBody = rawBody ? JSON.parse(rawBody) : null;
+      } catch {
+        // Keep non-JSON responses as plain text for debugging.
+      }
+
+      const output = JSON.stringify(
+        {
+          status: response.status,
+          ok: response.ok,
+          body: parsedBody,
+        },
+        null,
+        2,
+      );
+
+      setResponseText(output);
+
+      if (!response.ok) {
+        const serverMessage =
+          typeof parsedBody === 'object' &&
+          parsedBody !== null &&
+          'message' in parsedBody &&
+          typeof parsedBody.message === 'string'
+            ? parsedBody.message
+            : `Request failed with status ${response.status}`;
+
+        setError(serverMessage);
+      }
+    } catch (submitError) {
+      const message = submitError instanceof Error ? submitError.message : 'Request failed';
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
-    <div style={{ fontFamily: 'monospace', padding: 16, maxWidth: 900, margin: '0 auto' }}>
-      <h1>NextStep — API Test Client</h1>
-      <nav style={navStyle}>
-        <Link to="/">Auth</Link>
-        <Link to="/questionnaire">Questionnaire</Link>
-        <Link to="/openfinance">Open Finance</Link>
-        <Link to="/llm">LLM / Generic</Link>
-        <Link to="/data">Data Endpoints</Link>
-      </nav>
-      <Routes>
-        <Route path="/" element={<AuthTest />} />
-        <Route path="/questionnaire" element={<QuestionnaireTest />} />
-        <Route path="/openfinance" element={<OpenFinanceTest />} />
-        <Route path="/llm" element={<LlmTest />} />
-        <Route path="/data" element={<DataTest />} />
-      </Routes>
+    <div style={{ minHeight: '100vh', background: '#ffffff', color: '#111111', padding: 16 }}>
+      <div style={{ maxWidth: 420, margin: '40px auto', padding: 16, border: '1px solid #ddd', borderRadius: 6 }}>
+        <h1 style={{ marginTop: 0, marginBottom: 8, fontSize: 28 }}>Auth Test — Register</h1>
+        <p style={{ marginTop: 0, marginBottom: 12 }}>
+          Temporary backend test: POST {API_URL}
+        </p>
+
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12 }}>
+          <div style={{ display: 'grid', gap: 6 }}>
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              style={{ padding: 8, border: '1px solid #aaa' }}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gap: 6 }}>
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              style={{ padding: 8, border: '1px solid #aaa' }}
+            />
+          </div>
+
+          <button type="submit" disabled={isSubmitting} style={{ padding: '8px 12px' }}>
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </button>
+        </form>
+
+        {error && (
+          <p style={{ color: 'crimson', marginTop: 12 }}>{error}</p>
+        )}
+
+        {responseText && (
+          <pre style={{ marginTop: 12, padding: 12, background: '#f6f6f6', overflowX: 'auto' }}>
+            {responseText}
+          </pre>
+        )}
+      </div>
     </div>
   );
 }
