@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import FinancialReportUpload from './components/FinancialReportUpload';
 
 const API_URL = 'http://localhost:3000/auth/register';
 
@@ -111,6 +112,9 @@ function App() {
             {responseText}
           </pre>
         )}
+
+        <hr style={{ margin: '20px 0', borderColor: '#eee' }} />
+        <FinancialReportUpload />
       </div>
     </div>
   );
