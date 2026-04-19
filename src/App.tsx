@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import FinancialReportUpload from './components/FinancialReportUpload';
+import RoadmapCard from './components/RoadmapCard';
+import GoalList from './components/GoalList';
 
 const API_URL = 'http://localhost:3000/auth/register';
 
@@ -115,6 +117,13 @@ function App() {
 
         <hr style={{ margin: '20px 0', borderColor: '#eee' }} />
         <FinancialReportUpload />
+      </div>
+
+      {/* Reactive roadmap + goals — rendered outside the auth card so they
+          have full-width layout and appear immediately after analysis */}
+      <div style={{ maxWidth: 520, margin: '32px auto', padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <RoadmapCard />
+        <GoalList />
       </div>
     </div>
   );

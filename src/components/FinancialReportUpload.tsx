@@ -8,7 +8,11 @@ import {
   AlertCircle,
   TrendingUp,
 } from 'lucide-react';
-import { uploadFinancialReport, type AnalysisResult } from '../api/openfinance.api';
+import { uploadFinancialReport } from '../api/openfinance.api';
+import { useRoadmapStore } from '../store/roadmapStore';
+
+// TODO: replace with auth store value once login flow is wired up
+const TEMP_USER_ID = 'c7d044bf-41b3-4bd3-a76d-2933e58fdf27';
 
 type Status = 'idle' | 'ready' | 'loading' | 'success' | 'error';
 
@@ -16,9 +20,10 @@ export default function FinancialReportUpload() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<Status>('idle');
-  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [isDragging, setIsDragging] = useState(false);
+
+  const setFromUpload = useRoadmapStore((s) => s.setFromUpload);
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -30,14 +35,12 @@ export default function FinancialReportUpload() {
     }
     setFile(f);
     setStatus('ready');
-    setResult(null);
     setErrorMsg('');
   };
 
   const clearFile = () => {
     setFile(null);
     setStatus('idle');
-    setResult(null);
     setErrorMsg('');
     if (inputRef.current) inputRef.current.value = '';
   };
@@ -66,8 +69,11 @@ export default function FinancialReportUpload() {
     setErrorMsg('');
 
     try {
-      const { data } = await uploadFinancialReport(file);
-      setResult(data);
+      const { data } = await uploadFinancialReport(file, TEMP_USER_ID);
+      console.log('[FinancialReportUpload] analysis response:', data);
+      // Persist the DB-backed response into the global store so
+      // RoadmapCard and GoalList update reactively.
+      setFromUpload(data);
       setStatus('success');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
@@ -199,51 +205,13 @@ export default function FinancialReportUpload() {
         </div>
       )}
 
-      {/* ── Success / Result Card ── */}
-      {status === 'success' && result && (
-        <div className="rounded-2xl border border-violet-200 bg-white shadow-md dark:border-violet-800 dark:bg-gray-900 overflow-hidden">
-          {/* Card header */}
-          <div className="flex items-center gap-3 border-b border-violet-100 dark:border-violet-800/60 bg-violet-50 dark:bg-violet-950/40 px-5 py-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 shadow-sm">
-              <CheckCircle className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-violet-500 dark:text-violet-400">
-                Analysis Complete
-              </p>
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                Your financial report has been processed
-              </p>
-            </div>
-          </div>
-
-          {/* Card body */}
-          <div className="px-5 py-5 space-y-4">
-            {/* Step number */}
-            <div className="flex items-center gap-4">
-              <div className="flex flex-col items-center justify-center rounded-2xl bg-violet-600 px-5 py-3 shadow-sm min-w-[72px]">
-                <span className="text-2xl font-bold text-white leading-none">
-                  {result.step_id}
-                </span>
-                <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-violet-200">
-                  Step
-                </span>
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                This is your current financial step on the NextStep roadmap.
-              </p>
-            </div>
-
-            {/* Explanation */}
-            <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 px-4 py-4">
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
-                Explanation
-              </p>
-              <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {result.explanation}
-              </p>
-            </div>
-          </div>
+      {/* ── Success Banner ── */}
+      {status === 'success' && (
+        <div className="flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 dark:border-violet-800 dark:bg-violet-950/30">
+          <CheckCircle className="h-5 w-5 shrink-0 text-violet-600 dark:text-violet-400" />
+          <p className="text-sm font-medium text-violet-700 dark:text-violet-300">
+            Analysis complete — your roadmap and goals have been updated below.
+          </p>
         </div>
       )}
     </div>

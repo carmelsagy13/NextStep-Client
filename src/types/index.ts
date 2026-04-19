@@ -54,6 +54,12 @@ export interface RoadmapResponse {
   steps: RoadmapStep[];
 }
 
+// Upload analysis — response from POST /openfinance/upload
+export interface UploadAnalysisResponse {
+  roadmap_state: RoadmapState;
+  user_goals: UserGoal[];
+}
+
 // Notification
 export interface UserNotification {
   notificationId: string;
