@@ -32,6 +32,7 @@ export interface UserGoal {
   targetAmount: number;
   currentAmount: number;
   targetDate: string | null;
+  isCompleted: boolean;
 }
 
 // Roadmap

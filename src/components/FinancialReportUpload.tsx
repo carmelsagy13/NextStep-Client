@@ -11,12 +11,13 @@ import {
 import { uploadFinancialReport } from '../api/openfinance.api';
 import { useRoadmapStore } from '../store/roadmapStore';
 
-// TODO: replace with auth store value once login flow is wired up
-const TEMP_USER_ID = 'c7d044bf-41b3-4bd3-a76d-2933e58fdf27';
-
 type Status = 'idle' | 'ready' | 'loading' | 'success' | 'error';
 
-export default function FinancialReportUpload() {
+interface Props {
+  onSuccess?: () => void;
+}
+
+export default function FinancialReportUpload({ onSuccess }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<Status>('idle');
@@ -69,12 +70,13 @@ export default function FinancialReportUpload() {
     setErrorMsg('');
 
     try {
-      const { data } = await uploadFinancialReport(file, TEMP_USER_ID);
+      const { data } = await uploadFinancialReport(file);
       console.log('[FinancialReportUpload] analysis response:', data);
       // Persist the DB-backed response into the global store so
       // RoadmapCard and GoalList update reactively.
       setFromUpload(data);
       setStatus('success');
+      onSuccess?.();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
       setErrorMsg(

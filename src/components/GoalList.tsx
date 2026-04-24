@@ -8,20 +8,19 @@ function GoalItem({ goal }: { goal: UserGoal }) {
   const updateGoalProgress = useRoadmapStore((s) => s.updateGoalProgress);
   const [completing, setCompleting] = useState(false);
 
-  const isCompleted = goal.currentAmount >= goal.targetAmount;
-  const progress =
-    goal.targetAmount > 0
-      ? Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100))
-      : 0;
+  const isCompleted = goal.isCompleted;
+  const hasTarget = goal.targetAmount != null && Number(goal.targetAmount) > 0;
+  const progress = hasTarget
+    ? Math.min(100, Math.round((Number(goal.currentAmount) / Number(goal.targetAmount)) * 100))
+    : 0;
 
   const handleMarkComplete = async () => {
     if (isCompleted || completing) return;
     setCompleting(true);
     try {
       // Use the DB goalId for the backend call
-      await updateGoal(goal.goalId, { currentAmount: goal.targetAmount });
-      // Optimistically sync the store so UI updates immediately
-      updateGoalProgress(goal.goalId, goal.targetAmount);
+      await updateGoal(goal.goalId, { currentAmount: goal.targetAmount ?? 0 });
+      updateGoalProgress(goal.goalId, Number(goal.targetAmount ?? 0));
     } catch {
       // Silently revert on error — the store is unchanged because we
       // only called updateGoalProgress on success.
@@ -57,7 +56,9 @@ function GoalItem({ goal }: { goal: UserGoal }) {
               {goal.goalName}
             </p>
             <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              ₪{goal.currentAmount.toLocaleString()} / ₪{goal.targetAmount.toLocaleString()}
+              {hasTarget
+                ? `₪${Number(goal.currentAmount).toLocaleString()} / ₪${Number(goal.targetAmount).toLocaleString()}`
+                : `₪${Number(goal.currentAmount).toLocaleString()} saved`}
               {goal.targetDate && (
                 <> &middot; due {new Date(goal.targetDate).toLocaleDateString('en-IL', { month: 'short', year: 'numeric' })}</>
               )}
@@ -88,7 +89,7 @@ function GoalItem({ goal }: { goal: UserGoal }) {
       </div>
 
       {/* Progress bar */}
-      {!isCompleted && (
+      {!isCompleted && hasTarget && (
         <div className="mt-3 space-y-1">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
             <div
@@ -106,9 +107,9 @@ function GoalItem({ goal }: { goal: UserGoal }) {
 export default function GoalList() {
   const goals = useRoadmapStore((s) => s.goals);
 
-  if (goals.length === 0) return null;
+  if (!goals || goals.length === 0) return null;
 
-  const completed = goals.filter((g) => g.currentAmount >= g.targetAmount).length;
+  const completed = goals.filter((g) => g.isCompleted).length;
 
   return (
     <div className="w-full max-w-lg mx-auto space-y-3">
