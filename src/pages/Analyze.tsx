@@ -8,6 +8,7 @@ import RoadmapCard from '../components/RoadmapCard';
 import GoalList from '../components/GoalList';
 import { getRoadmap } from '../api/roadmap.api';
 import { getGoals } from '../api/goals.api';
+import { getProfile } from '../api/profile.api';
 import type { RoadmapState, UserGoal } from '../types';
 
 export default function Analyze() {
@@ -31,6 +32,21 @@ export default function Analyze() {
 
     async function loadData() {
       try {
+        // Check profile first — a 404 means the profile was deleted.
+        // Clear all stale local state and show the onboarding upload form.
+        await getProfile();
+      } catch (err) {
+        const status = (err as { response?: { status?: number } }).response?.status;
+        if (status === 404) {
+          reset();
+          setShowUpload(true);
+          setPageStatus('ready');
+          return;
+        }
+        // For non-404 profile errors fall through so the user isn't locked out.
+      }
+
+      try {
         const [roadmapRes, goalsRes] = await Promise.all([getRoadmap(), getGoals()]);
         const loadedState: RoadmapState | null = roadmapRes.data?.state ?? null;
         const loadedGoals: UserGoal[] = Array.isArray(goalsRes.data) ? goalsRes.data : [];
@@ -46,7 +62,7 @@ export default function Analyze() {
     }
 
     loadData();
-  }, [accessToken, hydrate]);
+  }, [accessToken, hydrate, reset]);
 
   const handleLogout = () => {
     clearAuth();
@@ -59,9 +75,9 @@ export default function Analyze() {
   // Full-screen loading spinner while fetching initial data
   if (pageStatus === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading your profile…</p>
         </div>
       </div>
@@ -71,17 +87,17 @@ export default function Analyze() {
   const hasData = !!roadmapState || (goals && goals.length > 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Top nav */}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
-          <span className="text-sm font-bold tracking-tight text-violet-600 dark:text-violet-400">
+          <span className="text-sm font-bold tracking-tight text-black dark:text-white">
             NextStep
           </span>
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm transition
+            className="flex items-center gap-1.5 rounded-sm border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition
               hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -110,8 +126,8 @@ export default function Analyze() {
             <button
               type="button"
               onClick={() => setShowUpload((v) => !v)}
-              className="shrink-0 flex items-center gap-1.5 rounded-xl border border-violet-300 bg-white px-3.5 py-2 text-xs font-semibold text-violet-600 shadow-sm transition
-                hover:bg-violet-50 dark:border-violet-700 dark:bg-gray-900 dark:text-violet-400 dark:hover:bg-violet-950/30"
+            className="shrink-0 flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-black transition
+                hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800"
             >
               <UploadCloud className="h-3.5 w-3.5" />
               Re-analyze

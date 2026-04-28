@@ -5,7 +5,7 @@ import { updateGoal } from '../api/goals.api';
 import type { UserGoal } from '../types';
 
 function GoalItem({ goal }: { goal: UserGoal }) {
-  const updateGoalProgress = useRoadmapStore((s) => s.updateGoalProgress);
+  const markGoalComplete = useRoadmapStore((s) => s.markGoalComplete);
   const [completing, setCompleting] = useState(false);
 
   const isCompleted = goal.isCompleted;
@@ -18,12 +18,19 @@ function GoalItem({ goal }: { goal: UserGoal }) {
     if (isCompleted || completing) return;
     setCompleting(true);
     try {
-      // Use the DB goalId for the backend call
-      await updateGoal(goal.goalId, { currentAmount: goal.targetAmount ?? 0 });
-      updateGoalProgress(goal.goalId, Number(goal.targetAmount ?? 0));
+      // Explicitly persist is_completed = true to the DB.
+      // Also set currentAmount to targetAmount when a numeric target exists.
+      await updateGoal(goal.goalId, {
+        isCompleted: true,
+        ...(goal.targetAmount != null && Number(goal.targetAmount) > 0
+          ? { currentAmount: Number(goal.targetAmount) }
+          : {}),
+      });
+      // Update local state only after the API call succeeds.
+      markGoalComplete(goal.goalId);
     } catch {
       // Silently revert on error — the store is unchanged because we
-      // only called updateGoalProgress on success.
+      // only called markGoalComplete on success.
     } finally {
       setCompleting(false);
     }
@@ -31,9 +38,9 @@ function GoalItem({ goal }: { goal: UserGoal }) {
 
   return (
     <div
-      className={`rounded-xl border px-4 py-4 transition-colors ${
+      className={`rounded-sm border px-4 py-4 transition-colors ${
         isCompleted
-          ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20'
+          ? 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/50'
           : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
       }`}
     >
@@ -41,7 +48,7 @@ function GoalItem({ goal }: { goal: UserGoal }) {
         {/* Icon + name */}
         <div className="flex items-start gap-2.5">
           {isCompleted ? (
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" />
           ) : (
             <Circle className="mt-0.5 h-5 w-5 shrink-0 text-gray-300 dark:text-gray-600" />
           )}
@@ -49,7 +56,7 @@ function GoalItem({ goal }: { goal: UserGoal }) {
             <p
               className={`text-sm font-semibold ${
                 isCompleted
-                  ? 'text-green-700 line-through dark:text-green-400'
+                  ? 'text-gray-400 line-through dark:text-gray-500'
                   : 'text-gray-900 dark:text-gray-100'
               }`}
             >
@@ -73,10 +80,10 @@ function GoalItem({ goal }: { goal: UserGoal }) {
             onClick={handleMarkComplete}
             disabled={completing}
             aria-label={`Mark "${goal.goalName}" as complete`}
-            className="shrink-0 flex items-center gap-1.5 rounded-lg border border-violet-300 bg-white px-2.5 py-1 text-xs font-semibold text-violet-600 shadow-sm transition
-              hover:bg-violet-50 active:scale-95
+            className="shrink-0 flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white px-2.5 py-1 text-xs font-semibold text-black transition
+              hover:bg-gray-50 active:scale-95
               disabled:cursor-not-allowed disabled:opacity-60
-              dark:border-violet-700 dark:bg-gray-900 dark:text-violet-400 dark:hover:bg-violet-950/30"
+              dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800"
           >
             {completing ? (
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -91,9 +98,9 @@ function GoalItem({ goal }: { goal: UserGoal }) {
       {/* Progress bar */}
       {!isCompleted && hasTarget && (
         <div className="mt-3 space-y-1">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-gray-100 dark:bg-gray-800">
             <div
-              className="h-full rounded-full bg-violet-500 transition-all duration-500"
+              className="h-full rounded-sm bg-black dark:bg-white transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -116,7 +123,7 @@ export default function GoalList() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+          <Target className="h-5 w-5 text-black dark:text-white" />
           <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Your Goals</h3>
         </div>
         <span className="text-xs text-gray-400">

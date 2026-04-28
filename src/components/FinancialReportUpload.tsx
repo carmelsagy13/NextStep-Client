@@ -89,11 +89,11 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
   // ── derived UI state ──────────────────────────────────────────────────────
 
   const dropzoneBase =
-    'relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer';
+    'relative flex flex-col items-center justify-center gap-3 rounded-sm border-2 border-dashed p-8 transition-colors cursor-pointer';
   const dropzoneIdle = isDragging
-    ? 'border-violet-500 bg-violet-50 dark:bg-violet-950/30'
-    : 'border-gray-300 dark:border-gray-600 hover:border-violet-400 hover:bg-gray-50 dark:hover:bg-gray-800/50';
-  const dropzoneReady = 'border-violet-500 bg-violet-50 dark:bg-violet-950/20';
+    ? 'border-black bg-gray-50 dark:bg-gray-800/50'
+    : 'border-gray-300 dark:border-gray-600 hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50';
+  const dropzoneReady = 'border-black bg-gray-50 dark:bg-gray-800/50';
 
   const isDropzoneReady = status === 'ready' || status === 'success';
 
@@ -134,13 +134,13 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
 
         {!file ? (
           <>
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/40">
-              <UploadCloud className="h-7 w-7 text-violet-600 dark:text-violet-400" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-sm bg-gray-100 dark:bg-gray-800">
+              <UploadCloud className="h-7 w-7 text-black dark:text-white" />
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Drag &amp; drop your file here, or{' '}
-                <span className="text-violet-600 dark:text-violet-400 underline underline-offset-2">
+                <span className="text-black dark:text-white underline underline-offset-2">
                   browse
                 </span>
               </p>
@@ -149,8 +149,8 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
           </>
         ) : (
           <>
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/40">
-              <FileJson className="h-7 w-7 text-violet-600 dark:text-violet-400" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-sm bg-gray-100 dark:bg-gray-800">
+              <FileJson className="h-7 w-7 text-black dark:text-white" />
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 break-all">
@@ -182,9 +182,10 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
         type="button"
         onClick={handleSubmit}
         disabled={!file || status === 'loading'}
-        className="w-full flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all
-          hover:bg-violet-700 active:scale-[0.98]
-          disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-violet-600"
+        className="w-full flex items-center justify-center gap-2 rounded-sm bg-black px-5 py-3 text-sm font-semibold text-white transition-all
+          hover:bg-gray-900 active:scale-[0.98]
+          disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black
+          dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:disabled:hover:bg-white"
       >
         {status === 'loading' ? (
           <>
@@ -201,7 +202,7 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
 
       {/* ── Error State ── */}
       {status === 'error' && errorMsg && (
-        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-950/30">
+        <div className="flex items-start gap-3 rounded-sm border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-950/30">
           <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
           <p className="text-sm text-red-700 dark:text-red-400">{errorMsg}</p>
         </div>
@@ -209,9 +210,9 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
 
       {/* ── Success Banner ── */}
       {status === 'success' && (
-        <div className="flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 dark:border-violet-800 dark:bg-violet-950/30">
-          <CheckCircle className="h-5 w-5 shrink-0 text-violet-600 dark:text-violet-400" />
-          <p className="text-sm font-medium text-violet-700 dark:text-violet-300">
+        <div className="flex items-center gap-3 rounded-sm border border-gray-300 bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-800/50">
+          <CheckCircle className="h-5 w-5 shrink-0 text-black dark:text-white" />
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
             Analysis complete — your roadmap and goals have been updated below.
           </p>
         </div>

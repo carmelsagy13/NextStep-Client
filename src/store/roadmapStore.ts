@@ -29,6 +29,12 @@ interface RoadmapStore {
    */
   updateGoalProgress: (goalId: string, currentAmount: number) => void;
 
+  /**
+   * Mark a goal as completed in the store.
+   * Call this only after a successful POST /goals/update with isCompleted: true.
+   */
+  markGoalComplete: (goalId: string) => void;
+
   /** Clear all analysis state (e.g. on logout) */
   reset: () => void;
 }
@@ -58,6 +64,13 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
                   : g.isCompleted,
             }
           : g,
+      ),
+    })),
+
+  markGoalComplete: (goalId) =>
+    set((state) => ({
+      goals: state.goals.map((g) =>
+        g.goalId === goalId ? { ...g, isCompleted: true } : g,
       ),
     })),
 

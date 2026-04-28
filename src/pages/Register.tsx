@@ -61,11 +61,11 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-violet-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 px-4">
       <div className="w-full max-w-md">
         {/* Logo mark */}
         <div className="flex flex-col items-center mb-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600 shadow-lg shadow-violet-200 dark:shadow-violet-900/40 mb-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-sm bg-black mb-4">
             <TrendingUp className="h-7 w-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
@@ -77,7 +77,7 @@ export default function Register() {
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-xl shadow-gray-100/60 dark:border-gray-700 dark:bg-gray-900 dark:shadow-gray-950/60 px-8 py-8">
+        <div className="rounded-sm border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 px-8 py-8">
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {/* Email */}
             <div className="space-y-1.5">
@@ -95,11 +95,11 @@ export default function Register() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@example.com"
-                className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400
-                  shadow-sm transition
-                  focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20
+                className="w-full rounded-sm border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400
+                  transition
+                  focus:border-black focus:outline-none focus:ring-1 focus:ring-black
                   dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500
-                  dark:focus:border-violet-400"
+                  dark:focus:border-white dark:focus:ring-white"
               />
             </div>
 
@@ -120,11 +120,11 @@ export default function Register() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Min. 8 characters"
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 pr-10 text-sm text-gray-900 placeholder-gray-400
-                    shadow-sm transition
-                    focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20
+                  className="w-full rounded-sm border border-gray-300 bg-white px-3.5 py-2.5 pr-10 text-sm text-gray-900 placeholder-gray-400
+                    transition
+                    focus:border-black focus:outline-none focus:ring-1 focus:ring-black
                     dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500
-                    dark:focus:border-violet-400"
+                    dark:focus:border-white dark:focus:ring-white"
                 />
                 <button
                   type="button"
@@ -154,11 +154,11 @@ export default function Register() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 pr-10 text-sm text-gray-900 placeholder-gray-400
-                    shadow-sm transition
-                    focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20
+                  className="w-full rounded-sm border border-gray-300 bg-white px-3.5 py-2.5 pr-10 text-sm text-gray-900 placeholder-gray-400
+                    transition
+                    focus:border-black focus:outline-none focus:ring-1 focus:ring-black
                     dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500
-                    dark:focus:border-violet-400"
+                    dark:focus:border-white dark:focus:ring-white"
                 />
                 <button
                   type="button"
@@ -173,7 +173,7 @@ export default function Register() {
 
             {/* Error message */}
             {error && (
-              <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 dark:border-red-800 dark:bg-red-950/30">
+              <div className="flex items-start gap-2.5 rounded-sm border border-red-200 bg-red-50 px-3.5 py-3 dark:border-red-800 dark:bg-red-950/30">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
                 <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
               </div>
@@ -183,9 +183,10 @@ export default function Register() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm
-                transition-all hover:bg-violet-700 active:scale-[0.98]
-                disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 rounded-sm bg-black px-5 py-2.5 text-sm font-semibold text-white
+                transition-all hover:bg-gray-900 active:scale-[0.98]
+                disabled:cursor-not-allowed disabled:opacity-60
+                dark:bg-white dark:text-black dark:hover:bg-gray-100"
             >
               {isSubmitting ? (
                 <>
@@ -204,7 +205,7 @@ export default function Register() {
           Already have an account?{' '}
           <Link
             to="/login"
-            className="font-semibold text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 transition-colors"
+            className="font-semibold text-black hover:text-gray-700 dark:text-white dark:hover:text-gray-300 transition-colors"
           >
             Log in
           </Link>
