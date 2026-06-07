@@ -63,13 +63,13 @@ export interface UploadAnalysisResponse {
 
 // POST /openfinance/connect-api — two-stage response
 export interface ConnectApiConnectionRequired {
-  stage: 'CONNECTION_REQUIRED';
+  stage: "CONNECTION_REQUIRED";
   connectionUrl: string;
   connectionId: string;
 }
 
 export interface ConnectApiAnalysisComplete {
-  stage: 'ANALYSIS_COMPLETE';
+  stage: "ANALYSIS_COMPLETE";
   analysis: UploadAnalysisResponse;
 }
 

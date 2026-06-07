@@ -1,11 +1,11 @@
-import apiClient from './client';
-import type { ConnectApiResponse, UploadAnalysisResponse } from '../types';
+import apiClient from "./client";
+import type { ConnectApiResponse, UploadAnalysisResponse } from "../types";
 
 export const connectBank = (userId: string) =>
-  apiClient.post('/openfinance/connect', { userId });
+  apiClient.post("/openfinance/connect", { userId });
 
 export const syncBank = (dateRange?: { from: string; to: string }) =>
-  apiClient.post('/openfinance/sync', dateRange ? { dateRange } : {});
+  apiClient.post("/openfinance/sync", dateRange ? { dateRange } : {});
 
 /**
  * Direct Bank Sync — connects to the Open Finance provider for the given
@@ -16,7 +16,7 @@ export const syncBank = (dateRange?: { from: string; to: string }) =>
  */
 export const connectBankApi = (externalUserId: string) =>
   apiClient.post<ConnectApiResponse>(
-    '/openfinance/connect-api',
+    "/openfinance/connect-api",
     { externalUserId },
     { timeout: 120_000 },
   );
@@ -26,16 +26,14 @@ export const connectBankApi = (externalUserId: string) =>
  * Call reset() from roadmapStore after this resolves to clear local state.
  */
 export const resetAccountData = () =>
-  apiClient.delete('/openfinance/reset-account');
+  apiClient.delete("/openfinance/reset-account");
 
 /** Sends a JSON file as multipart/form-data. Returns roadmap_state + user_goals.
  *  The userId is extracted from the Bearer token on the server — no need to pass it explicitly. */
 export const uploadFinancialReport = (file: File) => {
   const form = new FormData();
-  form.append('file', file);
-  return apiClient.post<UploadAnalysisResponse>(
-    '/openfinance/upload',
-    form,
-    { headers: { 'Content-Type': 'multipart/form-data' } },
-  );
+  form.append("file", file);
+  return apiClient.post<UploadAnalysisResponse>("/openfinance/upload", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 };

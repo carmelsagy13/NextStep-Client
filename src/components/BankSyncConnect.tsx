@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Building2,
   Link2,
   Loader2,
   AlertCircle,
   CheckCircle,
-} from 'lucide-react';
-import { connectBankApi } from '../api/openfinance.api';
-import { useRoadmapStore } from '../store/roadmapStore';
+} from "lucide-react";
+import { connectBankApi } from "../api/openfinance.api";
+import { useRoadmapStore } from "../store/roadmapStore";
 
-type Status = 'idle' | 'loading' | 'consent' | 'success' | 'error';
+type Status = "idle" | "loading" | "consent" | "success" | "error";
 
 interface Props {
   onSuccess?: () => void;
@@ -22,29 +22,33 @@ interface Props {
  * The last phase has no end — it stays until the API resolves.
  */
 const LOADING_PHASES = [
-  { startAt: 0,      progress: 15, label: 'מתחבר ל-Open Finance...' },
-  { startAt: 3_000,  progress: 40, label: 'יוצר חיבור מאובטח...' },
-  { startAt: 7_000,  progress: 70, label: 'מאחזר תנועות פיננסיות...' },
-  { startAt: 15_000, progress: 92, label: 'מנתח נתונים עם AI (Gemini/Groq)...' },
+  { startAt: 0, progress: 15, label: "מתחבר ל-Open Finance..." },
+  { startAt: 3_000, progress: 40, label: "יוצר חיבור מאובטח..." },
+  { startAt: 7_000, progress: 70, label: "מאחזר תנועות פיננסיות..." },
+  {
+    startAt: 15_000,
+    progress: 92,
+    label: "מנתח נתונים עם AI (Gemini/Groq)...",
+  },
 ] as const;
 
 export default function BankSyncConnect({ onSuccess }: Props) {
-  const [externalUserId, setExternalUserId] = useState('');
-  const [status, setStatus] = useState<Status>('idle');
-  const [errorMsg, setErrorMsg] = useState<string>('');
+  const [externalUserId, setExternalUserId] = useState("");
+  const [status, setStatus] = useState<Status>("idle");
+  const [errorMsg, setErrorMsg] = useState<string>("");
   const [phaseIndex, setPhaseIndex] = useState(0);
-  const [consentUrl, setConsentUrl] = useState<string>('');
+  const [consentUrl, setConsentUrl] = useState<string>("");
 
   const setFromUpload = useRoadmapStore((s) => s.setFromUpload);
 
   const trimmedId = externalUserId.trim();
-  const canSubmit = trimmedId.length > 0 && status !== 'loading';
+  const canSubmit = trimmedId.length > 0 && status !== "loading";
 
   // Cycle through loading phases while status === 'loading'.
   // Timers are scheduled relative to the moment loading starts, and are
   // cleared automatically when status changes (success/error/unmount).
   useEffect(() => {
-    if (status !== 'loading') return;
+    if (status !== "loading") return;
 
     setPhaseIndex(0);
     const timeouts: ReturnType<typeof setTimeout>[] = [];
@@ -59,69 +63,75 @@ export default function BankSyncConnect({ onSuccess }: Props) {
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
-    setStatus('loading');
-    setErrorMsg('');
+    setStatus("loading");
+    setErrorMsg("");
 
     try {
       const { data } = await connectBankApi(trimmedId);
-      console.log('[BankSyncConnect] connect-api response:', data);
+      console.log("[BankSyncConnect] connect-api response:", data);
 
-      if (data.stage === 'CONNECTION_REQUIRED') {
+      if (data.stage === "CONNECTION_REQUIRED") {
         setConsentUrl(data.connectionUrl);
-        setStatus('consent');
+        setStatus("consent");
         // Open the bank consent page in a new tab
-        window.open(data.connectionUrl, '_blank', 'noopener,noreferrer');
+        window.open(data.connectionUrl, "_blank", "noopener,noreferrer");
         return;
       }
 
       // stage === 'ANALYSIS_COMPLETE'
       setFromUpload(data.analysis);
-      setStatus('success');
+      setStatus("success");
       onSuccess?.();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
       setErrorMsg(
         error.response?.data?.message ??
           error.message ??
-          'Sync failed. Please check your credentials.',
+          "Sync failed. Please check your credentials.",
       );
-      setStatus('error');
+      setStatus("error");
     }
   };
 
   /** Called after the user completes the bank consent flow. Re-calls connect-api
    *  which should now return ANALYSIS_COMPLETE. */
   const handlePostConsent = async () => {
-    setStatus('loading');
-    setErrorMsg('');
+    setStatus("loading");
+    setErrorMsg("");
 
     try {
       const { data } = await connectBankApi(trimmedId);
-      console.log('[BankSyncConnect] post-consent response:', data);
+      console.log("[BankSyncConnect] post-consent response:", data);
 
-      if (data.stage === 'CONNECTION_REQUIRED') {
+      if (data.stage === "CONNECTION_REQUIRED") {
         // Still needs consent — re-show the consent banner
         setConsentUrl(data.connectionUrl);
-        setStatus('consent');
+        setStatus("consent");
         return;
       }
 
       setFromUpload(data.analysis);
-      setStatus('success');
+      setStatus("success");
       onSuccess?.();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
       setErrorMsg(
         error.response?.data?.message ??
           error.message ??
-          'Sync failed. Please try again.',
+          "Sync failed. Please try again.",
       );
-      setStatus('error');
+      setStatus("error");
     }
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSubmit();
+    if (e.key === "Enter") handleSubmit();
   };
 
   return (
@@ -156,7 +166,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
             value={externalUserId}
             onChange={(e) => setExternalUserId(e.target.value)}
             onKeyDown={onKeyDown}
-            disabled={status === 'loading'}
+            disabled={status === "loading"}
             className="w-full rounded-sm border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 transition
               focus:border-black focus:outline-none focus:ring-1 focus:ring-black
               disabled:cursor-not-allowed disabled:opacity-60
@@ -176,7 +186,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
           disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black
           dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:disabled:hover:bg-white"
       >
-        {status === 'loading' ? (
+        {status === "loading" ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
             Syncing with Bank…
@@ -190,7 +200,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
       </button>
 
       {/* ── Loading hint with phase + progress bar ── */}
-      {status === 'loading' && (
+      {status === "loading" && (
         <div
           className="space-y-2.5 rounded-sm border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/50"
           dir="rtl"
@@ -226,7 +236,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
       )}
 
       {/* ── Consent Flow Banner ── */}
-      {status === 'consent' && (
+      {status === "consent" && (
         <div className="space-y-3 rounded-sm border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-950/30">
           <div className="flex items-start gap-3">
             <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
@@ -265,7 +275,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
       )}
 
       {/* ── Error State ── */}
-      {status === 'error' && errorMsg && (
+      {status === "error" && errorMsg && (
         <div className="flex items-start gap-3 rounded-sm border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-950/30">
           <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
           <p className="text-sm text-red-700 dark:text-red-400">{errorMsg}</p>
@@ -273,7 +283,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
       )}
 
       {/* ── Success Banner ── */}
-      {status === 'success' && (
+      {status === "success" && (
         <div className="flex items-center gap-3 rounded-sm border border-gray-300 bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-800/50">
           <CheckCircle className="h-5 w-5 shrink-0 text-black dark:text-white" />
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
