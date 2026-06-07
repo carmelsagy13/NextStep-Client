@@ -15,8 +15,7 @@ export default function RoadmapCard() {
   if (!roadmapState) return null;
 
   const { currentStepId, progressPercent } = roadmapState;
-  const stepTitle = roadmapState.currentStep?.title ?? STEP_LABELS[currentStepId] ?? `Step ${currentStepId}`;
-  const stepDescription = roadmapState.currentStep?.description;
+  const stepTitle = STEP_LABELS[currentStepId] ?? `Step ${currentStepId}`;
   const progress = Math.max(0, Math.min(100, progressPercent));
 
   return (
@@ -48,11 +47,6 @@ export default function RoadmapCard() {
           </div>
           <div>
             <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{stepTitle}</p>
-            {stepDescription && (
-              <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                {stepDescription}
-              </p>
-            )}
           </div>
         </div>
 

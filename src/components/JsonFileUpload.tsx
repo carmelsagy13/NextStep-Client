@@ -23,18 +23,8 @@ export default function JsonFileUpload() {
     setStatus('loading');
     setMessage('');
 
-    const text = await file.text();
-    let parsed: unknown;
     try {
-      parsed = JSON.parse(text);
-    } catch {
-      setStatus('error');
-      setMessage('Invalid JSON file.');
-      return;
-    }
-
-    try {
-      await uploadFinancialReport(parsed);
+      await uploadFinancialReport(file);
       setStatus('success');
       setMessage('Report uploaded successfully.');
     } catch (err: unknown) {
