@@ -9,7 +9,7 @@ import {
 import { connectBankApi } from '../api/openfinance.api';
 import { useRoadmapStore } from '../store/roadmapStore';
 
-type Status = 'idle' | 'loading' | 'success' | 'error';
+type Status = 'idle' | 'loading' | 'consent' | 'success' | 'error';
 
 interface Props {
   onSuccess?: () => void;
@@ -33,6 +33,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [phaseIndex, setPhaseIndex] = useState(0);
+  const [consentUrl, setConsentUrl] = useState<string>('');
 
   const setFromUpload = useRoadmapStore((s) => s.setFromUpload);
 
@@ -63,10 +64,18 @@ export default function BankSyncConnect({ onSuccess }: Props) {
 
     try {
       const { data } = await connectBankApi(trimmedId);
-      console.log('[BankSyncConnect] analysis response:', data);
-      // Reuse the same store hydrator as the file-upload flow — the store
-      // is intentionally source-agnostic (file vs API).
-      setFromUpload(data);
+      console.log('[BankSyncConnect] connect-api response:', data);
+
+      if (data.stage === 'CONNECTION_REQUIRED') {
+        setConsentUrl(data.connectionUrl);
+        setStatus('consent');
+        // Open the bank consent page in a new tab
+        window.open(data.connectionUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
+
+      // stage === 'ANALYSIS_COMPLETE'
+      setFromUpload(data.analysis);
       setStatus('success');
       onSuccess?.();
     } catch (err: unknown) {
@@ -75,6 +84,37 @@ export default function BankSyncConnect({ onSuccess }: Props) {
         error.response?.data?.message ??
           error.message ??
           'Sync failed. Please check your credentials.',
+      );
+      setStatus('error');
+    }
+  };
+
+  /** Called after the user completes the bank consent flow. Re-calls connect-api
+   *  which should now return ANALYSIS_COMPLETE. */
+  const handlePostConsent = async () => {
+    setStatus('loading');
+    setErrorMsg('');
+
+    try {
+      const { data } = await connectBankApi(trimmedId);
+      console.log('[BankSyncConnect] post-consent response:', data);
+
+      if (data.stage === 'CONNECTION_REQUIRED') {
+        // Still needs consent — re-show the consent banner
+        setConsentUrl(data.connectionUrl);
+        setStatus('consent');
+        return;
+      }
+
+      setFromUpload(data.analysis);
+      setStatus('success');
+      onSuccess?.();
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      setErrorMsg(
+        error.response?.data?.message ??
+          error.message ??
+          'Sync failed. Please try again.',
       );
       setStatus('error');
     }
@@ -182,6 +222,45 @@ export default function BankSyncConnect({ onSuccess }: Props) {
           <p className="text-[11px] text-gray-500 dark:text-gray-400">
             התהליך עשוי להימשך עד דקה. נא לא לסגור את החלון.
           </p>
+        </div>
+      )}
+
+      {/* ── Consent Flow Banner ── */}
+      {status === 'consent' && (
+        <div className="space-y-3 rounded-sm border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-950/30">
+          <div className="flex items-start gap-3">
+            <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                Bank consent required
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-400">
+                A new tab was opened for you to authorize access to your bank
+                data. Once you&apos;ve completed the consent, click the button
+                below to continue.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePostConsent}
+              className="flex items-center gap-2 rounded-sm bg-black px-4 py-2 text-sm font-semibold text-white transition-all
+                hover:bg-gray-900 active:scale-[0.98]
+                dark:bg-white dark:text-black dark:hover:bg-gray-100"
+            >
+              <CheckCircle className="h-4 w-4" />
+              I&apos;ve completed consent
+            </button>
+            <a
+              href={consentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              Re-open consent page
+            </a>
+          </div>
         </div>
       )}
 

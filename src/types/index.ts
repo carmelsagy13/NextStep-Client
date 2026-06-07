@@ -61,6 +61,22 @@ export interface UploadAnalysisResponse {
   user_goals: UserGoal[];
 }
 
+// POST /openfinance/connect-api — two-stage response
+export interface ConnectApiConnectionRequired {
+  stage: 'CONNECTION_REQUIRED';
+  connectionUrl: string;
+  connectionId: string;
+}
+
+export interface ConnectApiAnalysisComplete {
+  stage: 'ANALYSIS_COMPLETE';
+  analysis: UploadAnalysisResponse;
+}
+
+export type ConnectApiResponse =
+  | ConnectApiConnectionRequired
+  | ConnectApiAnalysisComplete;
+
 // Notification
 export interface UserNotification {
   notificationId: string;

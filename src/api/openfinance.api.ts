@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { UploadAnalysisResponse } from '../types';
+import type { ConnectApiResponse, UploadAnalysisResponse } from '../types';
 
 export const connectBank = (userId: string) =>
   apiClient.post('/openfinance/connect', { userId });
@@ -15,7 +15,7 @@ export const syncBank = (dateRange?: { from: string; to: string }) =>
  * Long timeout (120s) to accommodate backend polling.
  */
 export const connectBankApi = (externalUserId: string) =>
-  apiClient.post<UploadAnalysisResponse>(
+  apiClient.post<ConnectApiResponse>(
     '/openfinance/connect-api',
     { externalUserId },
     { timeout: 120_000 },
