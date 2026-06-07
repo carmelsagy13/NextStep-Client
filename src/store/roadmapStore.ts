@@ -1,5 +1,6 @@
-import { create } from 'zustand';
-import type { RoadmapState, UserGoal } from '../types';
+import { create } from "zustand";
+import type { RoadmapState, UserGoal } from "../types";
+import { UserGoalStatus } from "../types";
 
 // Accept both snake_case (defined in UploadAnalysisResponse) and camelCase
 // variants so the store is resilient to either backend serialisation format.
@@ -31,7 +32,7 @@ interface RoadmapStore {
 
   /**
    * Mark a goal as completed in the store.
-   * Call this only after a successful POST /goals/update with isCompleted: true.
+   * Call this only after a successful POST /goals/update with status: 'completed'.
    */
   markGoalComplete: (goalId: string) => void;
 
@@ -58,10 +59,12 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
           ? {
               ...g,
               currentAmount,
-              isCompleted:
-                g.targetAmount != null && Number(g.targetAmount) > 0
-                  ? currentAmount >= Number(g.targetAmount)
-                  : g.isCompleted,
+              status:
+                g.targetAmount != null &&
+                Number(g.targetAmount) > 0 &&
+                currentAmount >= Number(g.targetAmount)
+                  ? UserGoalStatus.COMPLETED
+                  : g.status,
             }
           : g,
       ),
@@ -70,7 +73,13 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
   markGoalComplete: (goalId) =>
     set((state) => ({
       goals: state.goals.map((g) =>
-        g.goalId === goalId ? { ...g, isCompleted: true } : g,
+        g.goalId === goalId
+          ? {
+              ...g,
+              status: UserGoalStatus.COMPLETED,
+              completedAt: new Date().toISOString(),
+            }
+          : g,
       ),
     })),
 

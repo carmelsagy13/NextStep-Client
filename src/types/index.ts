@@ -25,14 +25,48 @@ export interface FinancialEvent {
 }
 
 // Goal
+export const UserGoalStatus = {
+  ACTIVE: "active",
+  COMPLETED: "completed",
+  REMOVED: "removed",
+  ABANDONED: "abandoned",
+  EXPIRED: "expired",
+} as const;
+
+export type UserGoalStatus =
+  (typeof UserGoalStatus)[keyof typeof UserGoalStatus];
+
 export interface UserGoal {
   goalId: string;
   userId: string;
   goalName: string;
-  targetAmount: number;
-  currentAmount: number;
+  targetAmount: number | null;
+  currentAmount: number | string;
   targetDate: string | null;
-  isCompleted: boolean;
+  status: UserGoalStatus;
+  priority: number;
+  assignedAt: string | null;
+  completedAt: string | null;
+  removedAt: string | null;
+  removalReason: string | null;
+  roadmapGoalId: string | null;
+  dynamicParams: Record<string, unknown>;
+  aiInsight: string | null;
+  sourceProfileHistoryId: string | null;
+  roadmapGoal?: RoadmapGoal;
+}
+
+// Roadmap Goal (template)
+export interface RoadmapGoal {
+  goalId: string;
+  stepId: number;
+  type: string;
+  title: string;
+  descriptionTemplate: string;
+  dynamicParams: Record<string, unknown>;
+  requiredContext: string | null;
+  isActive: boolean;
+  priority: number;
 }
 
 // Roadmap
@@ -48,6 +82,7 @@ export interface RoadmapState {
   userId: string;
   currentStepId: number;
   progressPercent: number;
+  stateDescription: string;
 }
 
 export interface RoadmapResponse {
@@ -76,6 +111,28 @@ export interface ConnectApiAnalysisComplete {
 export type ConnectApiResponse =
   | ConnectApiConnectionRequired
   | ConnectApiAnalysisComplete;
+
+// User Profile History
+export interface UserProfileHistory {
+  historyId: string;
+  userId: string;
+  step: number;
+  progressPercent: number;
+  cashFlow: number;
+  creditConsumption: number;
+  loans: number;
+  savingsInvestments: number;
+  pensionLongTerm: number;
+  lifestyleClubs: number;
+  mortgage: number;
+  systemIndicators: number;
+  previousStep: number | null;
+  stepChanged: boolean;
+  progressDelta: number | null;
+  stateDescription: string;
+  llmReasoning: string;
+  createdAt: string;
+}
 
 // Notification
 export interface UserNotification {

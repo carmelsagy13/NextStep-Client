@@ -1,4 +1,5 @@
-import apiClient from './client';
+import apiClient from "./client";
+import type { UserProfileHistory } from "../types";
 
 /**
  * Fetch the current user's profile.
@@ -7,6 +8,13 @@ import apiClient from './client';
  * Cache-busting headers prevent the browser from serving a stale 200 response.
  */
 export const getProfile = () =>
-  apiClient.get('/profile', {
-    headers: { 'Cache-Control': 'no-store', Pragma: 'no-cache' },
+  apiClient.get("/profile", {
+    headers: { "Cache-Control": "no-store", Pragma: "no-cache" },
   });
+
+/** Fetch the user's assessment history (abstracted criteria snapshots). */
+export const getProfileHistory = () =>
+  apiClient.get<UserProfileHistory[]>("/profile/history");
+
+/** Fetch the user's current progress summary. */
+export const getProfileProgress = () => apiClient.get("/profile/progress");

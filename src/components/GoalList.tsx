@@ -1,32 +1,56 @@
-import { useState } from 'react';
-import { Target, CheckCircle2, Circle, Loader2 } from 'lucide-react';
-import { useRoadmapStore } from '../store/roadmapStore';
-import { updateGoal } from '../api/goals.api';
-import type { UserGoal } from '../types';
+import { useState } from "react";
+import { Target, CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { useRoadmapStore } from "../store/roadmapStore";
+import { updateGoal } from "../api/goals.api";
+import type { UserGoal } from "../types";
+import { UserGoalStatus } from "../types";
+
+/** Interpolates {{key}} placeholders in a template using the dynamicParams object. */
+function renderDescription(
+  template: string,
+  params: Record<string, unknown>,
+): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+    const val = params[key];
+    if (val == null) return "";
+    if (typeof val === "number") return val.toLocaleString("he-IL");
+    return String(val);
+  });
+}
 
 function GoalItem({ goal }: { goal: UserGoal }) {
   const markGoalComplete = useRoadmapStore((s) => s.markGoalComplete);
   const [completing, setCompleting] = useState(false);
 
-  const isCompleted = goal.isCompleted;
+  const isCompleted = goal.status === UserGoalStatus.COMPLETED;
   const hasTarget = goal.targetAmount != null && Number(goal.targetAmount) > 0;
   const progress = hasTarget
-    ? Math.min(100, Math.round((Number(goal.currentAmount) / Number(goal.targetAmount)) * 100))
+    ? Math.min(
+        100,
+        Math.round(
+          (Number(goal.currentAmount) / Number(goal.targetAmount!)) * 100,
+        ),
+      )
     : 0;
+
+  // Build a meaningful description from the template + dynamic params
+  const description = goal.roadmapGoal?.descriptionTemplate
+    ? renderDescription(
+        goal.roadmapGoal.descriptionTemplate,
+        goal.dynamicParams ?? {},
+      )
+    : null;
 
   const handleMarkComplete = async () => {
     if (isCompleted || completing) return;
     setCompleting(true);
     try {
-      // Explicitly persist is_completed = true to the DB.
-      // Also set currentAmount to targetAmount when a numeric target exists.
       await updateGoal(goal.goalId, {
-        isCompleted: true,
+        status: UserGoalStatus.COMPLETED,
         ...(goal.targetAmount != null && Number(goal.targetAmount) > 0
           ? { currentAmount: Number(goal.targetAmount) }
           : {}),
       });
-      // Update local state only after the API call succeeds.
       markGoalComplete(goal.goalId);
     } catch {
       // Silently revert on error — the store is unchanged because we
@@ -38,10 +62,11 @@ function GoalItem({ goal }: { goal: UserGoal }) {
 
   return (
     <div
+      dir="rtl"
       className={`rounded-sm border px-4 py-4 transition-colors ${
         isCompleted
-          ? 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/50'
-          : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
+          ? "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/50"
+          : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -56,20 +81,44 @@ function GoalItem({ goal }: { goal: UserGoal }) {
             <p
               className={`text-sm font-semibold ${
                 isCompleted
-                  ? 'text-gray-400 line-through dark:text-gray-500'
-                  : 'text-gray-900 dark:text-gray-100'
+                  ? "text-gray-400 line-through dark:text-gray-500"
+                  : "text-gray-900 dark:text-gray-100"
               }`}
             >
               {goal.goalName}
             </p>
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              {hasTarget
-                ? `₪${Number(goal.currentAmount).toLocaleString()} / ₪${Number(goal.targetAmount).toLocaleString()}`
-                : `₪${Number(goal.currentAmount).toLocaleString()} saved`}
-              {goal.targetDate && (
-                <> &middot; due {new Date(goal.targetDate).toLocaleDateString('en-IL', { month: 'short', year: 'numeric' })}</>
-              )}
-            </p>
+
+            {/* Description from template */}
+            {description && !isCompleted && (
+              <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                {description}
+              </p>
+            )}
+
+            {/* AI Insight */}
+            {goal.aiInsight && !isCompleted && (
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-500 leading-relaxed italic">
+                {goal.aiInsight}
+              </p>
+            )}
+
+            {/* Monetary progress (only when there's a numeric target) */}
+            {hasTarget && (
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                ₪{Number(goal.currentAmount).toLocaleString()} / ₪
+                {Number(goal.targetAmount).toLocaleString()}
+                {goal.targetDate && (
+                  <>
+                    {" "}
+                    &middot; עד{" "}
+                    {new Date(goal.targetDate).toLocaleDateString("he-IL", {
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </>
+                )}
+              </p>
+            )}
           </div>
         </div>
 
@@ -90,7 +139,7 @@ function GoalItem({ goal }: { goal: UserGoal }) {
             ) : (
               <CheckCircle2 className="h-3 w-3" />
             )}
-            Complete
+            סיימתי
           </button>
         )}
       </div>
@@ -104,7 +153,7 @@ function GoalItem({ goal }: { goal: UserGoal }) {
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-right text-[10px] text-gray-400">{progress}%</p>
+          <p className="text-left text-[10px] text-gray-400">{progress}%</p>
         </div>
       )}
     </div>
@@ -116,18 +165,22 @@ export default function GoalList() {
 
   if (!goals || goals.length === 0) return null;
 
-  const completed = goals.filter((g) => g.isCompleted).length;
+  const completed = goals.filter(
+    (g) => g.status === UserGoalStatus.COMPLETED,
+  ).length;
 
   return (
-    <div className="w-full max-w-lg mx-auto space-y-3">
+    <div className="w-full max-w-lg mx-auto space-y-3" dir="rtl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Target className="h-5 w-5 text-black dark:text-white" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Your Goals</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            המשימות שלך
+          </h3>
         </div>
         <span className="text-xs text-gray-400">
-          {completed}/{goals.length} completed
+          {completed}/{goals.length} הושלמו
         </span>
       </div>
 
