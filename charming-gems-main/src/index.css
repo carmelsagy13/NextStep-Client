@@ -1,0 +1,260 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+/* NextStep Design System - Clean Light Mode Fintech */
+
+@layer base {
+  :root {
+    /* Light mode - Clean and professional */
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Primary - Teal for growth and trust */
+    --primary: 168 76% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Soft gray */
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 47%;
+
+    /* Accent - Warm amber for alerts and highlights */
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 168 76% 42%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --gradient-hero: linear-gradient(135deg, hsl(210 20% 98%) 0%, hsl(210 25% 95%) 50%, hsl(210 20% 98%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(210 20% 99%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(168 76% 42%) 0%, hsl(175 70% 38%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(32 95% 45%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+    
+    --shadow-glow: 0 0 40px -12px hsl(168 76% 42% / 0.4);
+    --shadow-card: 0 4px 24px -8px rgba(0,0,0,0.08);
+    --shadow-elevated: 0 20px 40px -16px rgba(0,0,0,0.12);
+    
+    /* Sidebar tokens */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 168 76% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 168 76% 42%;
+
+    /* Roadmap specific colors */
+    --stage-emergency: 168 76% 42%;
+    --stage-debt: 199 89% 48%;
+    --stage-savings: 142 71% 45%;
+    --stage-invest: 262 83% 58%;
+    --stage-wealth: 38 92% 50%;
+  }
+
+  .dark {
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 7%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 7%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 168 76% 52%;
+    --primary-foreground: 222 47% 4%;
+    --secondary: 220 30% 15%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 220 25% 12%;
+    --muted-foreground: 215 20% 55%;
+    --accent: 38 92% 55%;
+    --accent-foreground: 222 47% 4%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 30% 18%;
+    --input: 220 30% 15%;
+    --ring: 168 76% 52%;
+    --sidebar-background: 222 47% 5%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 168 76% 52%;
+    --sidebar-primary-foreground: 222 47% 4%;
+    --sidebar-accent: 220 30% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 30% 15%;
+    --sidebar-ring: 168 76% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card border border-border rounded-xl;
+    box-shadow: var(--shadow-card);
+  }
+
+  .glass-card-elevated {
+    @apply bg-card border border-border rounded-2xl;
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-primary);
+  }
+
+  .gradient-text-accent {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-accent);
+  }
+
+  .btn-primary-glow {
+    @apply relative overflow-hidden;
+    background-image: var(--gradient-primary);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .btn-primary-glow::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 100%);
+  }
+
+  .btn-primary-glow:hover::before {
+    @apply opacity-100;
+  }
+
+  .progress-bar {
+    @apply h-2 rounded-full overflow-hidden bg-muted;
+  }
+
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+    background-image: var(--gradient-primary);
+  }
+
+  .roadmap-step {
+    @apply relative pl-8 pb-8 border-l-2 border-border last:border-l-0 last:pb-0;
+  }
+
+  .roadmap-step::before {
+    content: '';
+    @apply absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-muted border-2 border-border;
+  }
+
+  .roadmap-step.completed::before {
+    @apply bg-primary border-primary;
+  }
+
+  .roadmap-step.active::before {
+    @apply bg-primary/30 border-primary;
+    box-shadow: 0 0 16px hsl(168 76% 42% / 0.5);
+  }
+
+  .stat-card {
+    @apply glass-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
+
+  .knowledge-card {
+    @apply glass-card p-5 transition-all duration-300 hover:border-primary/50 cursor-pointer;
+  }
+
+  .loss-alert {
+    @apply glass-card border-accent/50 p-4;
+    background: linear-gradient(135deg, hsl(38 92% 50% / 0.08) 0%, transparent 100%);
+  }
+
+  /* Roadmap pyramid stages */
+  .pyramid-stage {
+    @apply relative transition-all duration-300;
+  }
+
+  .pyramid-stage.active {
+    @apply scale-105;
+  }
+
+  .pyramid-stage.completed {
+    @apply opacity-100;
+  }
+
+  .pyramid-stage.locked {
+    @apply opacity-60;
+  }
+}
+
+@layer utilities {
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 1; box-shadow: 0 0 30px -10px hsl(168 76% 42% / 0.3); }
+    50% { opacity: 0.9; box-shadow: 0 0 50px -10px hsl(168 76% 42% / 0.5); }
+  }
+
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
