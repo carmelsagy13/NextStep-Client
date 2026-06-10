@@ -1,112 +1,472 @@
-@import "tailwindcss";
-
-:root {
-  --text: #4b5563;
-  --text-h: #000000;
-  --bg: #ffffff;
-  --border: #d1d5db;
-  --code-bg: #f3f4f6;
-  --accent: #000000;
-  --accent-bg: rgba(0, 0, 0, 0.05);
-  --accent-border: rgba(0, 0, 0, 0.2);
-  --social-bg: rgba(243, 244, 246, 0.5);
-  --shadow: rgba(0, 0, 0, 0.08) 0 1px 3px 0, rgba(0, 0, 0, 0.05) 0 1px 2px 0;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+﻿@font-face {
+  font-family: "Noto Sans Hebrew";
+  src:
+    url("/fonts/NotoSansHebrew-VariableFont.woff2") format("woff2"),
+    url("/fonts/NotoSansHebrew-VariableFont.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
 }
 
-@media (prefers-color-scheme: dark) {
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────
+   NextStep Design System — Color Palette
+   ─────────────────────────────────────────
+   Primary:     Refined Teal   172 72% 38%
+   Accent:      Warm Gold      43  96% 48%
+   Success:     Forest Green   142 65% 38%
+   Warning:     Burnt Orange   32  95% 52%
+   Info:        Ocean Blue     201 86% 46%
+   Destructive: Alert Red      4   86% 56%
+
+   Stage 1  Stability  → primary  172 72% 38%
+   Stage 2  Emergency  → info     201 86% 46%
+   Stage 3  Debt       → warning  32  95% 52%
+   Stage 4  Invest     → violet   255 68% 60%
+   Stage 5  Wealth     → accent   43  96% 48%
+   ───────────────────────────────────────── */
+
+@layer base {
   :root {
-    --text: #9ca3af;
-    --text-h: #f9fafb;
-    --bg: #0a0a0a;
-    --border: #27272a;
-    --code-bg: #18181b;
-    --accent: #ffffff;
-    --accent-bg: rgba(255, 255, 255, 0.08);
-    --accent-border: rgba(255, 255, 255, 0.2);
-    --social-bg: rgba(39, 39, 42, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 1px 3px 0, rgba(0, 0, 0, 0.25) 0 1px 2px 0;
+    /* ── Surfaces ── */
+    --background: 210 25% 98%;
+    --foreground: 224 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 47% 11%;
+
+    /* ── Primary — Refined Teal ── */
+    --primary: 172 72% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    /* ── Secondary — Cool Gray ── */
+    --secondary: 210 20% 95%;
+    --secondary-foreground: 224 47% 11%;
+
+    /* ── Muted ── */
+    --muted: 210 22% 92%;
+    --muted-foreground: 215 18% 47%;
+
+    /* ── Accent — Warm Gold/Amber ── */
+    --accent: 43 96% 48%;
+    --accent-foreground: 0 0% 100%;
+
+    /* ── Semantic — Destructive ── */
+    --destructive: 4 86% 56%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ── Semantic — Success ── */
+    --success: 142 65% 38%;
+    --success-foreground: 0 0% 100%;
+
+    /* ── Semantic — Warning ── */
+    --warning: 32 95% 52%;
+    --warning-foreground: 0 0% 100%;
+
+    /* ── Semantic — Info ── */
+    --info: 201 86% 46%;
+    --info-foreground: 0 0% 100%;
+
+    /* ── Chrome ── */
+    --border: 214 30% 89%;
+    --input: 214 30% 89%;
+    --ring: 172 72% 38%;
+    --radius: 1.25rem;
+
+    /* ── Gradients ── */
+    --gradient-hero: linear-gradient(
+      135deg,
+      hsl(210 25% 98%) 0%,
+      hsl(210 28% 95%) 50%,
+      hsl(210 25% 98%) 100%
+    );
+    --gradient-card: linear-gradient(
+      135deg,
+      hsl(0 0% 100%) 0%,
+      hsl(210 25% 99%) 100%
+    );
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(172 72% 38%) 0%,
+      hsl(178 68% 34%) 100%
+    );
+    --gradient-accent: linear-gradient(
+      135deg,
+      hsl(43 96% 48%) 0%,
+      hsl(36 98% 43%) 100%
+    );
+    --gradient-success: linear-gradient(
+      135deg,
+      hsl(142 65% 38%) 0%,
+      hsl(148 60% 34%) 100%
+    );
+    --gradient-glass: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(255, 255, 255, 0.72) 100%
+    );
+
+    /* ── Shadows ── */
+    --shadow-glow: 0 0 40px -12px hsl(172 72% 38% / 0.35);
+    --shadow-card: 0 4px 24px -8px rgba(0, 0, 0, 0.07);
+    --shadow-elevated: 0 20px 40px -16px rgba(0, 0, 0, 0.11);
+
+    /* ── Sidebar ── */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 224 47% 11%;
+    --sidebar-primary: 172 72% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 95%;
+    --sidebar-accent-foreground: 224 47% 11%;
+    --sidebar-border: 214 30% 89%;
+    --sidebar-ring: 172 72% 38%;
+
+    /* ── Roadmap Stage Colors ── */
+    --stage-1: 172 72% 38%; /* Stability  — teal     */
+    --stage-2: 201 86% 46%; /* Emergency  — sky blue */
+    --stage-3: 32 95% 52%; /* Debt       — orange   */
+    --stage-4: 255 68% 60%; /* Invest     — violet   */
+    --stage-5: 43 96% 48%; /* Wealth     — gold     */
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  .dark {
+    /* ── Surfaces ── */
+    --background: 224 47% 5%;
+    --foreground: 210 40% 96%;
+
+    --card: 224 47% 8%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 224 47% 8%;
+    --popover-foreground: 210 40% 96%;
+
+    /* ── Primary ── */
+    --primary: 172 72% 52%;
+    --primary-foreground: 224 47% 5%;
+
+    /* ── Secondary ── */
+    --secondary: 220 30% 15%;
+    --secondary-foreground: 210 40% 96%;
+
+    /* ── Muted ── */
+    --muted: 220 25% 13%;
+    --muted-foreground: 215 20% 56%;
+
+    /* ── Accent ── */
+    --accent: 43 96% 54%;
+    --accent-foreground: 224 47% 5%;
+
+    /* ── Destructive ── */
+    --destructive: 4 86% 62%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ── Success ── */
+    --success: 142 65% 50%;
+    --success-foreground: 0 0% 100%;
+
+    /* ── Warning ── */
+    --warning: 32 95% 60%;
+    --warning-foreground: 224 47% 5%;
+
+    /* ── Info ── */
+    --info: 201 86% 58%;
+    --info-foreground: 0 0% 100%;
+
+    /* ── Chrome ── */
+    --border: 220 30% 18%;
+    --input: 220 30% 16%;
+    --ring: 172 72% 52%;
+
+    /* ── Gradients (dark) ── */
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(172 72% 52%) 0%,
+      hsl(178 68% 46%) 100%
+    );
+    --gradient-accent: linear-gradient(
+      135deg,
+      hsl(43 96% 54%) 0%,
+      hsl(36 98% 48%) 100%
+    );
+    --gradient-success: linear-gradient(
+      135deg,
+      hsl(142 65% 50%) 0%,
+      hsl(148 60% 44%) 100%
+    );
+    --shadow-glow: 0 0 40px -12px hsl(172 72% 52% / 0.4);
+
+    /* ── Sidebar ── */
+    --sidebar-background: 224 47% 6%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 172 72% 52%;
+    --sidebar-primary-foreground: 224 47% 5%;
+    --sidebar-accent: 220 30% 13%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 220 30% 16%;
+    --sidebar-ring: 172 72% 52%;
+
+    /* ── Stage Colors (dark — slightly brighter) ── */
+    --stage-1: 172 72% 52%;
+    --stage-2: 201 86% 58%;
+    --stage-3: 32 95% 62%;
+    --stage-4: 255 68% 70%;
+    --stage-5: 43 96% 54%;
   }
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    @apply border-border;
+  }
 
-body {
-  margin: 0;
-}
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter", sans-serif;
+  }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Space Grotesk", sans-serif;
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+
+@layer components {
+  /* ── Cards ── */
+  .glass-card {
+    @apply bg-card border border-border rounded-xl;
+    box-shadow: var(--shadow-card);
+  }
+
+  .glass-card-elevated {
+    @apply bg-card border border-border rounded-2xl;
+    box-shadow: var(--shadow-elevated);
+  }
+
+  /* ── Text Gradients ── */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-primary);
+  }
+
+  .gradient-text-accent {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-accent);
+  }
+
+  /* ── Hero Button ── */
+  .btn-primary-glow {
+    @apply relative overflow-hidden;
+    background-image: var(--gradient-primary);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .btn-primary-glow::before {
+    content: "";
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.28) 0%,
+      transparent 100%
+    );
+  }
+
+  .btn-primary-glow:hover::before {
+    @apply opacity-100;
+  }
+
+  /* ── Progress ── */
+  .progress-bar {
+    @apply h-2 rounded-full overflow-hidden bg-muted;
+  }
+
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+    background-image: var(--gradient-primary);
+  }
+
+  /* ── Roadmap Timeline ── */
+  .roadmap-step {
+    @apply relative pl-8 pb-8 border-l-2 border-border last:border-l-0 last:pb-0;
+  }
+
+  .roadmap-step::before {
+    content: "";
+    @apply absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-muted border-2 border-border;
+  }
+
+  .roadmap-step.completed::before {
+    @apply bg-primary border-primary;
+  }
+
+  .roadmap-step.active::before {
+    @apply bg-primary/30 border-primary;
+    box-shadow: 0 0 16px hsl(var(--primary) / 0.5);
+  }
+
+  /* ── Stat & Knowledge Cards ── */
+  .stat-card {
+    @apply glass-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
+
+  .knowledge-card {
+    @apply glass-card p-5 transition-all duration-300 hover:border-primary/50 cursor-pointer;
+  }
+
+  /* ── Loss Alert ── */
+  .loss-alert {
+    @apply glass-card border-warning/50 p-4;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--warning) / 0.08) 0%,
+      transparent 100%
+    );
+  }
+
+  /* ── Semantic Badge Chips ── */
+  .badge-success {
+    @apply bg-success/10 text-success border border-success/20 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .badge-warning {
+    @apply bg-warning/10 text-warning border border-warning/20 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .badge-info {
+    @apply bg-info/10 text-info border border-info/20 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .badge-destructive {
+    @apply bg-destructive/10 text-destructive border border-destructive/20 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* ── Roadmap Stage Text & Background ── */
+  .stage-1 {
+    color: hsl(var(--stage-1));
+  }
+  .stage-2 {
+    color: hsl(var(--stage-2));
+  }
+  .stage-3 {
+    color: hsl(var(--stage-3));
+  }
+  .stage-4 {
+    color: hsl(var(--stage-4));
+  }
+  .stage-5 {
+    color: hsl(var(--stage-5));
+  }
+
+  .stage-bg-1 {
+    background-color: hsl(var(--stage-1));
+  }
+  .stage-bg-2 {
+    background-color: hsl(var(--stage-2));
+  }
+  .stage-bg-3 {
+    background-color: hsl(var(--stage-3));
+  }
+  .stage-bg-4 {
+    background-color: hsl(var(--stage-4));
+  }
+  .stage-bg-5 {
+    background-color: hsl(var(--stage-5));
+  }
+
+  /* ── Pyramid Stage ── */
+  .pyramid-stage {
+    @apply relative transition-all duration-300;
+  }
+
+  .pyramid-stage.active {
+    @apply scale-105;
+  }
+  .pyramid-stage.completed {
+    @apply opacity-100;
+  }
+  .pyramid-stage.locked {
+    @apply opacity-60;
   }
 }
-p {
-  margin: 0;
-}
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
+@layer utilities {
+  /* ── Animations ── */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .animate-pulse-slow {
+    animation: pulse-slow 2s ease-in-out infinite;
+  }
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out forwards;
+  }
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  @keyframes pulse-slow {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      opacity: 1;
+      box-shadow: 0 0 30px -10px hsl(var(--primary) / 0.3);
+    }
+    50% {
+      opacity: 0.9;
+      box-shadow: 0 0 50px -10px hsl(var(--primary) / 0.5);
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }

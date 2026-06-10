@@ -90,7 +90,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
       setErrorMsg(
         error.response?.data?.message ??
           error.message ??
-          "Sync failed. Please check your credentials.",
+          "הסנכרון נכשל. אנא בדוק את הפרטים שלך.",
       );
       setStatus("error");
     }
@@ -124,7 +124,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
       setErrorMsg(
         error.response?.data?.message ??
           error.message ??
-          "Sync failed. Please try again.",
+          "הסנכרון נכשל. אנא נסה שנית.",
       );
       setStatus("error");
     }
@@ -135,15 +135,15 @@ export default function BankSyncConnect({ onSuccess }: Props) {
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto space-y-5 font-sans">
+    <div className="w-full max-w-lg mx-auto space-y-5 font-sans" dir="rtl">
       {/* ── Header ── */}
       <div>
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
-          Direct Bank Sync
+          סנכרון ישיר עם הבנק
         </h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Connect your bank via Open Finance and we&apos;ll fetch your latest
-          financial data automatically.
+          חבר את הבנק שלך דרך Open Finance ונביא אוטומטית את הנתונים הפיננסיים
+          העדכניים שלך.
         </p>
       </div>
 
@@ -153,7 +153,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
           htmlFor="bank-user-id"
           className="block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
         >
-          Bank User ID
+          מזהה משתמש בנקאי
         </label>
         <div className="relative">
           <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -162,7 +162,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
             type="text"
             autoComplete="off"
             spellCheck={false}
-            placeholder="e.g. user_a1b2c3d4"
+            placeholder="לדוגמא: user_a1b2c3d4"
             value={externalUserId}
             onChange={(e) => setExternalUserId(e.target.value)}
             onKeyDown={onKeyDown}
@@ -189,12 +189,12 @@ export default function BankSyncConnect({ onSuccess }: Props) {
         {status === "loading" ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Syncing with Bank…
+            מסנכרן עם הבנק...
           </>
         ) : (
           <>
             <Link2 className="h-4 w-4" />
-            Synchronize Bank Data
+            סנכרן נתוני בנק
           </>
         )}
       </button>
@@ -242,12 +242,11 @@ export default function BankSyncConnect({ onSuccess }: Props) {
             <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
             <div className="space-y-1">
               <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
-                Bank consent required
+                נדרש אישור בנקאי
               </p>
               <p className="text-xs text-blue-700 dark:text-blue-400">
-                A new tab was opened for you to authorize access to your bank
-                data. Once you&apos;ve completed the consent, click the button
-                below to continue.
+                נפתחה לשונית חדשה לאישור גישה לנתוני הבנק. לאחר השלמת האישור,
+                לחץ על הכפתור למטה להמשיך.
               </p>
             </div>
           </div>
@@ -260,7 +259,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
                 dark:bg-white dark:text-black dark:hover:bg-gray-100"
             >
               <CheckCircle className="h-4 w-4" />
-              I&apos;ve completed consent
+              השלמתי את האישור
             </button>
             <a
               href={consentUrl}
@@ -268,7 +267,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
               rel="noopener noreferrer"
               className="text-xs text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
             >
-              Re-open consent page
+              פתח מחדש את דף האישור
             </a>
           </div>
         </div>
@@ -287,7 +286,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
         <div className="flex items-center gap-3 rounded-sm border border-gray-300 bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-800/50">
           <CheckCircle className="h-5 w-5 shrink-0 text-black dark:text-white" />
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            Sync successful — your roadmap is ready below.
+            הסנכרון הצליח — המפה שלך מוכנה למטה.
           </p>
         </div>
       )}
