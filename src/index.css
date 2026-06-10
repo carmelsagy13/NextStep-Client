@@ -1,4 +1,14 @@
-﻿@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+﻿@font-face {
+  font-family: "Noto Sans Hebrew";
+  src:
+    url("/fonts/NotoSansHebrew-VariableFont.woff2") format("woff2"),
+    url("/fonts/NotoSansHebrew-VariableFont.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -69,7 +79,7 @@
     --border: 214 30% 89%;
     --input: 214 30% 89%;
     --ring: 172 72% 38%;
-    --radius: 0.75rem;
+    --radius: 1.25rem;
 
     /* ── Gradients ── */
     --gradient-hero: linear-gradient(

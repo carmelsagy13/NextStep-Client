@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Target, CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { Target, CheckCircle2, Circle, Loader2, Check } from "lucide-react";
 import { useRoadmapStore } from "../store/roadmapStore";
 import { updateGoal } from "../api/goals.api";
 import type { UserGoal } from "../types";
@@ -65,7 +65,7 @@ function GoalItem({ goal }: { goal: UserGoal }) {
       dir="rtl"
       className={`rounded-sm border px-4 py-4 transition-colors ${
         isCompleted
-          ? "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/50"
+          ? "border-primary/30 bg-primary/10"
           : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
       }`}
     >
@@ -73,7 +73,9 @@ function GoalItem({ goal }: { goal: UserGoal }) {
         {/* Icon + name */}
         <div className="flex items-start gap-2.5">
           {isCompleted ? (
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" />
+            <div className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-primary flex items-center justify-center">
+              <Check className="h-3 w-3 text-primary-foreground" />
+            </div>
           ) : (
             <Circle className="mt-0.5 h-5 w-5 shrink-0 text-gray-300 dark:text-gray-600" />
           )}
@@ -97,7 +99,7 @@ function GoalItem({ goal }: { goal: UserGoal }) {
 
             {/* AI Insight */}
             {goal.aiInsight && !isCompleted && (
-              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-500 leading-relaxed italic">
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-500 leading-relaxed">
                 {goal.aiInsight}
               </p>
             )}

@@ -80,12 +80,15 @@ const Auth = () => {
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Home</span>
+          <span>חזרה לדף הבית</span>
         </Link>
       </header>
 
       {/* Main content */}
-      <main className="relative z-10 flex-1 flex items-center justify-center p-4">
+      <main
+        className="relative z-10 flex-1 flex items-center justify-center p-4"
+        dir="rtl"
+      >
         <div className="w-full max-w-md space-y-8">
           {/* Logo & Title */}
           <div className="text-center space-y-2">
@@ -93,12 +96,12 @@ const Auth = () => {
               <img src={logo} alt="NextStep" className="h-12" />
             </div>
             <h1 className="font-display text-3xl font-bold">
-              {isLogin ? "Welcome back" : "Create your account"}
+              {isLogin ? "ברוך שובך" : "צור את החשבון שלך"}
             </h1>
             <p className="text-muted-foreground">
               {isLogin
-                ? "Sign in to continue your financial journey"
-                : "Start your journey toward financial freedom"}
+                ? "התחבר כדי להמשיך את המסע הפיננסי שלך"
+                : "התחל את המסע שלך לחופש פיננסי"}
             </p>
           </div>
 
@@ -116,13 +119,13 @@ const Auth = () => {
             <div className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name">שם</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       id="name"
                       type="text"
-                      placeholder="Your name"
+                      placeholder="השם שלך"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="pl-10"
@@ -132,7 +135,7 @@ const Auth = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">אימייל</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -148,7 +151,7 @@ const Auth = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">סיסמא</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -186,22 +189,22 @@ const Auth = () => {
             >
               {isLoading
                 ? isLogin
-                  ? "Signing in..."
-                  : "Creating account..."
+                  ? "מתחבר..."
+                  : "יוצר חשבון..."
                 : isLogin
-                  ? "Sign In"
-                  : "Create Account"}
+                  ? "התחבר"
+                  : "צור חשבון"}
             </Button>
           </form>
 
           {/* Toggle mode */}
           <p className="text-center text-sm text-muted-foreground">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            {isLogin ? "אין לך חשבון? " : "כבר יש לך חשבון? "}
             <button
               onClick={toggleMode}
               className="text-primary hover:text-primary/80 font-medium transition-colors"
             >
-              {isLogin ? "Sign up" : "Sign in"}
+              {isLogin ? "הירשם" : "התחבר"}
             </button>
           </p>
         </div>

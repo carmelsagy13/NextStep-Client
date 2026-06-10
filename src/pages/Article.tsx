@@ -26,27 +26,39 @@ const Article = () => {
 
   // Simple markdown-like rendering
   const renderContent = (content: string) => {
-    return content.split('\n\n').map((paragraph, index) => {
+    return content.split("\n\n").map((paragraph, index) => {
       // Headers
-      if (paragraph.startsWith('## ')) {
+      if (paragraph.startsWith("## ")) {
         return (
           <h2 key={index} className="font-display text-xl font-bold mt-6 mb-3">
-            {paragraph.replace('## ', '')}
+            {paragraph.replace("## ", "")}
           </h2>
         );
       }
-      
+
       // Lists
-      if (paragraph.includes('\n- ') || paragraph.startsWith('- ')) {
-        const items = paragraph.split('\n').filter(line => line.startsWith('- ') || line.startsWith('1. '));
+      if (paragraph.includes("\n- ") || paragraph.startsWith("- ")) {
+        const items = paragraph
+          .split("\n")
+          .filter((line) => line.startsWith("- ") || line.startsWith("1. "));
         return (
           <ul key={index} className="space-y-2 my-4">
             {items.map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-muted-foreground">
+              <li
+                key={i}
+                className="flex items-start gap-2 text-muted-foreground"
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                <span dangerouslySetInnerHTML={{ 
-                  __html: item.replace(/^[-\d.]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>') 
-                }} />
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: item
+                      .replace(/^[-\d.]\s*/, "")
+                      .replace(
+                        /\*\*(.*?)\*\*/g,
+                        '<strong class="text-foreground">$1</strong>',
+                      ),
+                  }}
+                />
               </li>
             ))}
           </ul>
@@ -55,11 +67,14 @@ const Article = () => {
 
       // Regular paragraphs with bold text
       return (
-        <p 
-          key={index} 
+        <p
+          key={index}
           className="text-muted-foreground leading-relaxed my-4"
-          dangerouslySetInnerHTML={{ 
-            __html: paragraph.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>') 
+          dangerouslySetInnerHTML={{
+            __html: paragraph.replace(
+              /\*\*(.*?)\*\*/g,
+              '<strong class="text-foreground">$1</strong>',
+            ),
           }}
         />
       );
@@ -69,16 +84,16 @@ const Article = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppNavbar />
-      
-      <main className="flex-1 p-4">
+
+      <main className="flex-1 px-6 py-4">
         <div className="max-w-lg mx-auto">
           {/* Back link */}
-          <Link 
+          <Link
             to={`/category/${article.category}`}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            {category?.title || 'Back'}
+            {category?.title || "Back"}
           </Link>
 
           {/* Article header */}
@@ -102,14 +117,12 @@ const Article = () => {
             </p>
 
             {/* Article content */}
-            <div className="prose-sm">
-              {renderContent(article.content)}
-            </div>
+            <div className="prose-sm">{renderContent(article.content)}</div>
           </article>
 
           {/* Back to category */}
           <div className="mt-6 text-center">
-            <Link 
+            <Link
               to={`/category/${article.category}`}
               className="inline-flex items-center gap-2 text-primary hover:underline"
             >

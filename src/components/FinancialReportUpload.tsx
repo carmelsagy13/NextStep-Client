@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState } from "react";
 import {
   UploadCloud,
   FileJson,
@@ -7,11 +7,11 @@ import {
   Loader2,
   AlertCircle,
   TrendingUp,
-} from 'lucide-react';
-import { uploadFinancialReport } from '../api/openfinance.api';
-import { useRoadmapStore } from '../store/roadmapStore';
+} from "lucide-react";
+import { uploadFinancialReport } from "../api/openfinance.api";
+import { useRoadmapStore } from "../store/roadmapStore";
 
-type Status = 'idle' | 'ready' | 'loading' | 'success' | 'error';
+type Status = "idle" | "ready" | "loading" | "success" | "error";
 
 interface Props {
   onSuccess?: () => void;
@@ -20,8 +20,8 @@ interface Props {
 export default function FinancialReportUpload({ onSuccess }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<Status>('idle');
-  const [errorMsg, setErrorMsg] = useState<string>('');
+  const [status, setStatus] = useState<Status>("idle");
+  const [errorMsg, setErrorMsg] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
 
   const setFromUpload = useRoadmapStore((s) => s.setFromUpload);
@@ -29,21 +29,21 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
   // ── helpers ──────────────────────────────────────────────────────────────
 
   const selectFile = (f: File) => {
-    if (!f.name.endsWith('.json')) {
-      setErrorMsg('Only .json files are accepted.');
-      setStatus('error');
+    if (!f.name.endsWith(".json")) {
+      setErrorMsg("מקובלים קבצי .json בלבד.");
+      setStatus("error");
       return;
     }
     setFile(f);
-    setStatus('ready');
-    setErrorMsg('');
+    setStatus("ready");
+    setErrorMsg("");
   };
 
   const clearFile = () => {
     setFile(null);
-    setStatus('idle');
-    setErrorMsg('');
-    if (inputRef.current) inputRef.current.value = '';
+    setStatus("idle");
+    setErrorMsg("");
+    if (inputRef.current) inputRef.current.value = "";
   };
 
   // ── drag-and-drop ─────────────────────────────────────────────────────────
@@ -66,46 +66,51 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
 
   const handleSubmit = async () => {
     if (!file) return;
-    setStatus('loading');
-    setErrorMsg('');
+    setStatus("loading");
+    setErrorMsg("");
 
     try {
       const { data } = await uploadFinancialReport(file);
-      console.log('[FinancialReportUpload] analysis response:', data);
+      console.log("[FinancialReportUpload] analysis response:", data);
       // Persist the DB-backed response into the global store so
       // RoadmapCard and GoalList update reactively.
       setFromUpload(data);
-      setStatus('success');
+      setStatus("success");
       onSuccess?.();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
       setErrorMsg(
-        error.response?.data?.message ?? error.message ?? 'Upload failed. Please try again.',
+        error.response?.data?.message ??
+          error.message ??
+          "Upload failed. Please try again.",
       );
-      setStatus('error');
+      setStatus("error");
     }
   };
 
   // ── derived UI state ──────────────────────────────────────────────────────
 
   const dropzoneBase =
-    'relative flex flex-col items-center justify-center gap-3 rounded-sm border-2 border-dashed p-8 transition-colors cursor-pointer';
+    "relative flex flex-col items-center justify-center gap-3 rounded-sm border-2 border-dashed p-8 transition-colors cursor-pointer";
   const dropzoneIdle = isDragging
-    ? 'border-black bg-gray-50 dark:bg-gray-800/50'
-    : 'border-gray-300 dark:border-gray-600 hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50';
-  const dropzoneReady = 'border-black bg-gray-50 dark:bg-gray-800/50';
+    ? "border-black bg-gray-50 dark:bg-gray-800/50"
+    : "border-gray-300 dark:border-gray-600 hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50";
+  const dropzoneReady = "border-black bg-gray-50 dark:bg-gray-800/50";
 
-  const isDropzoneReady = status === 'ready' || status === 'success';
+  const isDropzoneReady = status === "ready" || status === "success";
 
   return (
-    <div className="w-full max-w-lg mx-auto space-y-5 font-sans">
+    <div className="w-full max-w-lg mx-auto space-y-5 font-sans" dir="rtl">
       {/* ── Header ── */}
       <div>
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
-          Financial Report Analysis
+          ניתוח דוח פיננסי
         </h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Upload your Open Finance JSON report and receive an AI-powered analysis.
+          העלה את דוח ה-JSON של Open Finance וקבל ניתוח מבוסס בינה מלאכותית.
         </p>
       </div>
 
@@ -119,7 +124,7 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
         role="button"
         aria-label="Upload JSON file"
         tabIndex={0}
-        onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
+        onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
       >
         <input
           ref={inputRef}
@@ -139,12 +144,12 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Drag &amp; drop your file here, or{' '}
+                גרור ושחרר את הקובץ לכאן, או{" "}
                 <span className="text-black dark:text-white underline underline-offset-2">
-                  browse
+                  חפש
                 </span>
               </p>
-              <p className="mt-1 text-xs text-gray-400">Accepts .json files only</p>
+              <p className="mt-1 text-xs text-gray-400">מקבל קבצי .json בלבד</p>
             </div>
           </>
         ) : (
@@ -181,27 +186,27 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={!file || status === 'loading'}
+        disabled={!file || status === "loading"}
         className="w-full flex items-center justify-center gap-2 rounded-sm bg-black px-5 py-3 text-sm font-semibold text-white transition-all
           hover:bg-gray-900 active:scale-[0.98]
           disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black
           dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:disabled:hover:bg-white"
       >
-        {status === 'loading' ? (
+        {status === "loading" ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Analysing…
+            מנתח...
           </>
         ) : (
           <>
             <TrendingUp className="h-4 w-4" />
-            Submit Analysis
+            שלח לניתוח
           </>
         )}
       </button>
 
       {/* ── Error State ── */}
-      {status === 'error' && errorMsg && (
+      {status === "error" && errorMsg && (
         <div className="flex items-start gap-3 rounded-sm border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-950/30">
           <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
           <p className="text-sm text-red-700 dark:text-red-400">{errorMsg}</p>
@@ -209,11 +214,11 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
       )}
 
       {/* ── Success Banner ── */}
-      {status === 'success' && (
+      {status === "success" && (
         <div className="flex items-center gap-3 rounded-sm border border-gray-300 bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-800/50">
           <CheckCircle className="h-5 w-5 shrink-0 text-black dark:text-white" />
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            Analysis complete — your roadmap and goals have been updated below.
+            הניתוח הושלם — המפה והיעדים שלך עודכנו.
           </p>
         </div>
       )}

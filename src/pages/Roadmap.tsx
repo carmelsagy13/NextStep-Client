@@ -38,20 +38,20 @@ const STEP_LABELS: Record<
   }
 > = {
   1: {
-    name: "Financial Stability",
-    subtitle: "Build Your Foundation",
+    name: "יציבות פיננסית",
+    subtitle: "בנה את הבסיס שלך",
     icon: Shield,
   },
-  2: { name: "Emergency Fund", subtitle: "Your Safety Net", icon: PiggyBank },
+  2: { name: "קרן חירום", subtitle: "רשת הביטחון שלך", icon: PiggyBank },
   3: {
-    name: "Debt Freedom",
-    subtitle: "Clear High-Interest Debt",
+    name: "חופש מחובות",
+    subtitle: "סלק חובות בריבית גבוהה",
     icon: CreditCard,
   },
-  4: { name: "Invest & Grow", subtitle: "Enter the Market", icon: TrendingUp },
+  4: { name: "השקע וצמח", subtitle: "כנס לשוק", icon: TrendingUp },
   5: {
-    name: "Wealth Building",
-    subtitle: "Financial Independence",
+    name: "בניית עושר",
+    subtitle: "עצמאות כלכלית",
     icon: Crown,
   },
 };
@@ -60,7 +60,7 @@ const STEP_LABELS: Record<
 function buildStages(currentStepId: number, progressPercent: number) {
   return [1, 2, 3, 4, 5].map((stepId) => {
     const meta = STEP_LABELS[stepId] ?? {
-      name: `Stage ${stepId}`,
+      name: `שלב ${stepId}`,
       subtitle: "",
       icon: Shield,
     };
@@ -180,7 +180,9 @@ const Roadmap = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading your profile…</p>
+          <p className="text-sm text-muted-foreground">
+            טוען את הפרופיל שלך...
+          </p>
         </div>
       </div>
     );
@@ -190,7 +192,14 @@ const Roadmap = () => {
 
   // Build stages for the visual component
   const currentStepId = roadmapState?.currentStepId ?? 1;
-  const progressPercent = roadmapState?.progressPercent ?? 0;
+  // Compute progress from live goal completion so the ring updates immediately
+  const completedGoals = goals.filter(
+    (g: UserGoal) => g.status === UserGoalStatus.COMPLETED,
+  ).length;
+  const progressPercent =
+    goals.length > 0
+      ? Math.round((completedGoals / goals.length) * 100)
+      : (roadmapState?.progressPercent ?? 0);
   const financialStages = buildStages(currentStepId, progressPercent);
   const currentStage = financialStages[currentIndex];
 
@@ -207,11 +216,11 @@ const Roadmap = () => {
                 <UploadCloud className="w-8 h-8 text-primary" />
               </div>
               <h1 className="font-display text-2xl font-bold">
-                Set Up Your Roadmap
+                הגדרת המפה שלך
               </h1>
               <p className="text-muted-foreground text-sm">
-                Connect your bank or upload an Open Finance report to generate
-                your personalised plan.
+                חבר את הבנק שלך או העלה דוח Open Finance כדי ליצור את התוכנית
+                האישית שלך.
               </p>
             </div>
 
@@ -228,12 +237,20 @@ const Roadmap = () => {
             <div className="relative flex items-center">
               <div className="flex-1 border-t border-border" />
               <span className="px-3 text-xs text-muted-foreground">
-                or connect directly
+                או התחבר ישירות
               </span>
               <div className="flex-1 border-t border-border" />
             </div>
 
-            <BankSyncConnect />
+            <BankSyncConnect
+              onSuccess={() => {
+                const updatedState = useRoadmapStore.getState().roadmapState;
+                if (updatedState?.currentStepId) {
+                  setCurrentIndex(updatedState.currentStepId - 1);
+                }
+                setShowUpload(false);
+              }}
+            />
           </div>
         </main>
       )}
@@ -251,7 +268,10 @@ const Roadmap = () => {
           </div>
 
           {/* Tasks / Goals section */}
-          <div className="flex-1 bg-muted/30 rounded-t-3xl border-t border-border px-4 pt-6 pb-8 mt-4">
+          <div
+            className="flex-1 bg-muted/30 rounded-t-3xl border-t border-border px-6 pt-6 pb-8 mt-4"
+            dir="rtl"
+          >
             <div className="max-w-sm mx-auto space-y-5">
               {/* Stage description */}
               {roadmapState?.stateDescription && (
@@ -273,35 +293,15 @@ const Roadmap = () => {
               </div>
 
               {/* Goals from backend */}
-              {goals.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-display text-lg font-semibold">
-                      Your Goals
-                    </h3>
-                    <span className="text-sm text-muted-foreground">
-                      {
-                        goals.filter(
-                          (g: UserGoal) =>
-                            g.status === UserGoalStatus.COMPLETED,
-                        ).length
-                      }
-                      /{goals.length}
-                    </span>
-                  </div>
-                  <GoalList />
-                </div>
-              )}
+              {goals.length > 0 && <GoalList />}
 
               {/* Empty state for locked stage */}
               {currentStage.status === "locked" && (
                 <div className="text-center p-6 rounded-2xl bg-muted/50 border border-border">
                   <Lock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="font-medium text-muted-foreground">
-                    Stage Locked
-                  </p>
+                  <p className="font-medium text-muted-foreground">שלב נעול</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Complete previous stages to unlock this one.
+                    השלם שלבים קודמים כדי לפתוח את זה.
                   </p>
                 </div>
               )}
@@ -310,9 +310,9 @@ const Roadmap = () => {
               {currentStage.status === "completed" && (
                 <div className="text-center p-4 rounded-2xl bg-primary/5 border border-primary/20">
                   <Check className="w-8 h-8 text-primary mx-auto mb-2" />
-                  <p className="font-medium text-primary">Stage Completed!</p>
+                  <p className="font-medium text-primary">שלב הושלם!</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Keep going — the next stage awaits.
+                    כל הכבוד — השלב הבא מחכה לך.
                   </p>
                 </div>
               )}
@@ -325,12 +325,12 @@ const Roadmap = () => {
                     className="flex items-center gap-2 text-xs text-muted-foreground hover:text-destructive transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Reset my data and start over
+                    אפס את הנתונים שלי והתחל מחדש
                   </button>
                 ) : (
                   <div className="glass-card p-4 space-y-3 border-destructive/20">
                     <p className="text-sm font-medium text-destructive">
-                      This will delete all your roadmap data permanently.
+                      פעולה זו תמחק את כל נתוני המפה לצמיתות.
                     </p>
                     <div className="flex gap-2">
                       <Button
@@ -342,14 +342,14 @@ const Roadmap = () => {
                         {resetting ? (
                           <Loader2 className="w-4 h-4 animate-spin mr-1" />
                         ) : null}
-                        Confirm Reset
+                        אשר איפוס
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setShowResetConfirm(false)}
                       >
-                        Cancel
+                        ביטול
                       </Button>
                     </div>
                   </div>

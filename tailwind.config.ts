@@ -19,8 +19,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        display: ["Space Grotesk", "sans-serif"],
+        sans: ["Noto Sans Hebrew", "Inter", "sans-serif"],
+        display: ["Noto Sans Hebrew", "Space Grotesk", "sans-serif"],
       },
       colors: {
         /* ── shadcn/ui semantic tokens ── */

@@ -27,12 +27,12 @@ const Category = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppNavbar />
-      
-      <main className="flex-1 p-4">
+
+      <main className="flex-1 px-6 py-4">
         <div className="max-w-lg mx-auto">
           {/* Back link */}
-          <Link 
-            to="/data-center" 
+          <Link
+            to="/data-center"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -41,15 +41,19 @@ const Category = () => {
 
           {/* Header */}
           <div className="mb-6">
-            <h1 className="font-display text-2xl font-bold mb-2">{category.title}</h1>
+            <h1 className="font-display text-2xl font-bold mb-2">
+              {category.title}
+            </h1>
             <p className="text-muted-foreground">{category.description}</p>
-            <p className="text-sm text-muted-foreground mt-2">{articles.length} articles</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {articles.length} articles
+            </p>
           </div>
 
           {/* Articles list */}
           <div className="space-y-3">
             {articles.map((article) => (
-              <Link 
+              <Link
                 key={article.id}
                 to={`/article/${article.id}`}
                 className="glass-card p-4 block group hover:border-primary/30 transition-all"
@@ -78,7 +82,9 @@ const Category = () => {
           {articles.length === 0 && (
             <div className="glass-card p-8 text-center">
               <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">No articles in this category yet.</p>
+              <p className="text-muted-foreground">
+                No articles in this category yet.
+              </p>
             </div>
           )}
         </div>
