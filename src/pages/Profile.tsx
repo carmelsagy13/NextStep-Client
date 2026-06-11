@@ -12,6 +12,7 @@ import {
   Target,
   Loader2,
   ArrowRight,
+  IdCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -24,7 +25,7 @@ interface BackendProfile {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { userProfile: user, isAuthenticated } = useAuth();
+  const { userProfile: user, displayId, email, isAuthenticated } = useAuth();
   const [profile, setProfile] = useState<BackendProfile | null>(null);
   const [history, setHistory] = useState<UserProfileHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,7 +81,7 @@ const Profile = () => {
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                 <span className="text-2xl font-bold text-primary">
                   {user?.name?.charAt(0) ||
-                    user?.email?.charAt(0).toUpperCase() ||
+                    email?.charAt(0).toUpperCase() ||
                     "U"}
                 </span>
               </div>
@@ -92,8 +93,14 @@ const Profile = () => {
                 )}
                 <p className="text-muted-foreground flex items-center gap-2">
                   <Mail className="w-4 h-4" />
-                  {user?.email || "אין אימייל"}
+                  {email || "אין אימייל"}
                 </p>
+                {displayId && (
+                  <p className="text-muted-foreground flex items-center gap-2 mt-1">
+                    <IdCard className="w-4 h-4" />
+                    {displayId}
+                  </p>
+                )}
               </div>
             </div>
           </div>

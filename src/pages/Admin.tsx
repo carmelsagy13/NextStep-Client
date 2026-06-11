@@ -20,6 +20,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const userId = useAuthStore((s) => s.userId);
+  const displayId = useAuthStore((s) => s.displayId);
   const { reset } = useRoadmapStore();
 
   const [step, setStep] = useState<AdminStep>("confirm");
@@ -67,9 +68,9 @@ const Admin = () => {
             <h1 className="font-display text-2xl font-bold">
               פאנל ניהול — טעינת נתונים
             </h1>
-            {userId && (
+            {(displayId || userId) && (
               <p className="text-xs text-muted-foreground font-mono bg-muted/50 rounded px-3 py-1 inline-block">
-                משתמש: {userId}
+                משתמש: {displayId ?? userId}
               </p>
             )}
           </div>

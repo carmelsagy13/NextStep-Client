@@ -16,6 +16,8 @@ export function useAuth() {
   const {
     accessToken,
     userId,
+    displayId,
+    email,
     userProfile,
     setAuth,
     setUserProfile,
@@ -29,8 +31,13 @@ export function useAuth() {
     ): Promise<{ error?: string; redirectTo?: string }> => {
       try {
         const res = await apiLogin(email, password);
-        const { accessToken: token, userId: uid } = res.data;
-        setAuth(token, uid);
+        const {
+          accessToken: token,
+          userId: uid,
+          id: displayId,
+          email: userEmail,
+        } = res.data;
+        setAuth(token, uid, displayId, userEmail);
 
         // Check whether this user already has financial data so the caller
         // can navigate to /setup (no data) or /roadmap (data present).
@@ -77,8 +84,13 @@ export function useAuth() {
     ): Promise<{ error?: string }> => {
       try {
         const res = await apiRegister(id, email, password);
-        const { accessToken: token, userId: uid } = res.data;
-        setAuth(token, uid);
+        const {
+          accessToken: token,
+          userId: uid,
+          id: displayId,
+          email: userEmail,
+        } = res.data;
+        setAuth(token, uid, displayId, userEmail);
         return {};
       } catch (err) {
         const msg = (
@@ -106,6 +118,8 @@ export function useAuth() {
     logout,
     isAuthenticated: !!accessToken,
     userId,
+    displayId,
+    email,
     userProfile,
     isLoading: false,
   };
