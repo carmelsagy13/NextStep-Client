@@ -181,10 +181,9 @@ export default function BankSyncConnect({ onSuccess }: Props) {
         type="button"
         onClick={handleSubmit}
         disabled={!canSubmit}
-        className="w-full flex items-center justify-center gap-2 rounded-sm bg-black px-5 py-3 text-sm font-semibold text-white transition-all
-          hover:bg-gray-900 active:scale-[0.98]
-          disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black
-          dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:disabled:hover:bg-white"
+        className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-all
+          hover:bg-primary/90 active:scale-[0.98]
+          disabled:cursor-not-allowed disabled:opacity-50"
       >
         {status === "loading" ? (
           <>
@@ -254,9 +253,8 @@ export default function BankSyncConnect({ onSuccess }: Props) {
             <button
               type="button"
               onClick={handlePostConsent}
-              className="flex items-center gap-2 rounded-sm bg-black px-4 py-2 text-sm font-semibold text-white transition-all
-                hover:bg-gray-900 active:scale-[0.98]
-                dark:bg-white dark:text-black dark:hover:bg-gray-100"
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all
+                hover:bg-primary/90 active:scale-[0.98]"
             >
               <CheckCircle className="h-4 w-4" />
               השלמתי את האישור

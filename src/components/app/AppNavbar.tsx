@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 const AppNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { userProfile: user, logout, isAuthenticated } = useAuth();
   const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
@@ -25,10 +25,12 @@ const AppNavbar = () => {
     setIsOpen(false);
   };
 
+  const logoHref = isAuthenticated ? "/roadmap" : "/";
+
   return (
     <nav className="sticky top-0 z-50 bg-background border-b border-border">
       <div className="relative px-6 h-14 flex items-center justify-between">
-        {/* Dark/Light mode toggle */}
+        {/* Left: Dark/Light mode toggle */}
         <button
           onClick={toggleTheme}
           className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-muted transition-colors"
@@ -41,12 +43,12 @@ const AppNavbar = () => {
           )}
         </button>
 
-        {/* Logo — centered */}
-        <Link to="/" className="absolute left-1/2 -translate-x-1/2">
+        {/* Center: Logo */}
+        <Link to={logoHref} className="absolute left-1/2 -translate-x-1/2">
           <img src="/IconNoText.png" alt="NextStep" className="h-8" />
         </Link>
 
-        {/* Burger menu button */}
+        {/* Right: hamburger — always visible */}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-muted transition-colors"
@@ -56,7 +58,7 @@ const AppNavbar = () => {
         </button>
       </div>
 
-      {/* Dropdown menu - no sliding, just show/hide */}
+      {/* Dropdown menu */}
       {isOpen && (
         <>
           {/* Backdrop */}
@@ -71,13 +73,14 @@ const AppNavbar = () => {
             dir="rtl"
           >
             {/* User info */}
-            {user && (
+            {user && (user.name || user.email) && (
               <div className="p-4 border-b border-border">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-sm font-semibold text-primary">
                       {user.name?.charAt(0) ||
-                        user.email.charAt(0).toUpperCase()}
+                        user.email?.charAt(0)?.toUpperCase() ||
+                        "?"}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -86,46 +89,70 @@ const AppNavbar = () => {
                         {user.name}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground truncate">
-                      {user.email}
-                    </p>
+                    {user.email && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user.email}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Nav links */}
-            <div className="py-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 transition-colors
-                    ${
-                      isActive(link.href)
-                        ? "bg-primary/10 text-primary"
-                        : "text-foreground hover:bg-muted"
-                    }
-                  `}
-                >
-                  <link.icon className="w-5 h-5" />
-                  <span className="font-medium">{link.label}</span>
-                </Link>
-              ))}
-            </div>
+            {isAuthenticated ? (
+              <>
+                {/* Nav links */}
+                <div className="py-2">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      to={link.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 transition-colors
+                        ${
+                          isActive(link.href)
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground hover:bg-muted"
+                        }
+                      `}
+                    >
+                      <link.icon className="w-5 h-5" />
+                      <span className="font-medium">{link.label}</span>
+                    </Link>
+                  ))}
+                </div>
 
-            {/* Logout */}
-            <div className="p-4 border-t border-border">
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-                <span className="font-medium">התנתקות</span>
-              </button>
-            </div>
+                {/* Logout */}
+                <div className="p-4 border-t border-border">
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span className="font-medium">התנתקות</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* Not logged in → Log In / Get Started */
+              <div className="py-2">
+                <Link
+                  to="/auth"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-foreground hover:bg-muted transition-colors"
+                >
+                  <span className="font-medium">Log In</span>
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-primary hover:bg-muted transition-colors"
+                >
+                  <span className="font-medium">Get Started</span>
+                </Link>
+              </div>
+            )}
           </div>
         </>
       )}

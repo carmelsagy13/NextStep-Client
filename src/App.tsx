@@ -9,6 +9,8 @@ import Auth from "./pages/Auth";
 import Register from "./pages/Register";
 import Questionnaire from "./pages/Questionnaire";
 import Roadmap from "./pages/Roadmap";
+import Setup from "./pages/Setup";
+import Admin from "./pages/Admin";
 import DataCenter from "./pages/DataCenter";
 import Category from "./pages/Category";
 import Article from "./pages/Article";
@@ -29,7 +31,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/register" element={<Register />} />
             <Route path="/questionnaire" element={<Questionnaire />} />
+            <Route path="/setup" element={<Setup />} />
             <Route path="/roadmap" element={<Roadmap />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="/data-center" element={<DataCenter />} />
             <Route path="/category/:categoryId" element={<Category />} />
             <Route path="/article/:articleId" element={<Article />} />

@@ -1,3 +1,63 @@
+/* ── Progress animation keyframes ─────────────────────────────────── */
+
+/* Fade-in for the inline refresh panel */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out both;
+}
+
+/* Pulse for a stage that was just reached */
+@keyframes stagePulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.5);
+  }
+  40% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 12px hsl(var(--primary) / 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+  }
+}
+.animate-stage-pulse {
+  animation: stagePulse 1.2s ease-out 2;
+}
+
+/* Check-in animation for a newly completed goal */
+@keyframes goalCheck {
+  0% {
+    transform: scale(1);
+    color: inherit;
+  }
+  30% {
+    transform: scale(1.12);
+    color: hsl(var(--primary));
+  }
+  60% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+    color: hsl(var(--primary));
+  }
+}
+.animate-goal-check {
+  animation: goalCheck 0.7s ease-out both;
+}
+
+/* ─────────────────────────────────────────────────────────────────── */
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;
@@ -167,7 +227,7 @@
 
   &::before,
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     top: -4.5px;
     border: 5px solid transparent;

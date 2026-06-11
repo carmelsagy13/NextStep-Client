@@ -6,6 +6,7 @@ import {
   logout as apiLogout,
 } from "../api/auth.api";
 import { getProfile } from "../api/profile.api";
+import { getGoals } from "../api/goals.api";
 
 /**
  * Auth hook — session-only. No data is persisted to localStorage.
@@ -22,19 +23,41 @@ export function useAuth() {
   } = useAuthStore();
 
   const login = useCallback(
-    async (email: string, password: string): Promise<{ error?: string }> => {
+    async (
+      email: string,
+      password: string,
+    ): Promise<{ error?: string; redirectTo?: string }> => {
       try {
         const res = await apiLogin(email, password);
         const { accessToken: token, userId: uid } = res.data;
         setAuth(token, uid);
-        // Always fetch fresh user details after login
+
+        // Check whether this user already has financial data so the caller
+        // can navigate to /setup (no data) or /roadmap (data present).
+        let hasData = false;
         try {
-          const profileRes = await getProfile();
-          setUserProfile(profileRes.data);
+          await getProfile();
+          // Profile exists — also check if they have any goals.
+          try {
+            const goalsRes = await getGoals();
+            const goals = Array.isArray(goalsRes.data) ? goalsRes.data : [];
+            hasData = goals.length > 0;
+          } catch {
+            hasData = false;
+          }
+          // Store the profile for downstream components.
+          try {
+            const profileRes = await getProfile();
+            setUserProfile(profileRes.data);
+          } catch {
+            // Non-critical — ignore.
+          }
         } catch {
-          // Profile may not exist yet (new user) — not an error
+          // Profile 404 → genuinely new user, no data yet.
+          hasData = false;
         }
-        return {};
+
+        return { redirectTo: hasData ? "/roadmap" : "/setup" };
       } catch (err) {
         const msg = (
           err as { response?: { data?: { message?: string | string[] } } }

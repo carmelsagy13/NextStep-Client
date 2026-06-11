@@ -1,10 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useTheme } from "next-themes";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
@@ -14,7 +18,6 @@ const Navbar = () => {
           <a href="/" className="flex items-center">
             <img src="/IconNoText.png" alt="NextStep" className="h-10" />
           </a>
-
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
             <a
@@ -42,9 +45,19 @@ const Navbar = () => {
               Pricing
             </a>
           </div>
-
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+            </button>
             <Link to="/auth">
               <Button variant="ghost" size="sm">
                 Log In
@@ -56,11 +69,27 @@ const Navbar = () => {
               </Button>
             </Link>
           </div>
-
-          {/* Mobile menu button */}
-          <button className="md:hidden p-2" onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Mobile: theme toggle + menu button */}
+          <div className="md:hidden flex items-center gap-1">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
+            <button className="p-2" onClick={() => setIsOpen(!isOpen)}>
+              {isOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>{" "}
+          </div>{" "}
         </div>
 
         {/* Mobile menu */}

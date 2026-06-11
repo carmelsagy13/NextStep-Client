@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Shield,
@@ -9,14 +9,14 @@ import {
   Check,
   Lock,
   Loader2,
-  UploadCloud,
-  Trash2,
+  RefreshCw,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppNavbar from "@/components/app/AppNavbar";
 import RoadmapSteps from "@/components/roadmap/RoadmapSteps";
-import FinancialReportUpload from "@/components/FinancialReportUpload";
-import BankSyncConnect from "@/components/BankSyncConnect";
+import DataLoadSection from "@/components/DataLoadSection";
 import GoalList from "@/components/GoalList";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/authStore";
@@ -24,7 +24,6 @@ import { useRoadmapStore } from "@/store/roadmapStore";
 import { getRoadmap } from "@/api/roadmap.api";
 import { getGoals } from "@/api/goals.api";
 import { getProfile } from "@/api/profile.api";
-import { resetAccountData } from "@/api/openfinance.api";
 import { UserGoalStatus } from "@/types";
 import type { RoadmapState, UserGoal } from "@/types";
 
@@ -94,9 +93,19 @@ const Roadmap = () => {
 
   const [pageStatus, setPageStatus] = useState<"loading" | "ready">("loading");
   const [showUpload, setShowUpload] = useState(false);
-  const [resetting, setResetting] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Refresh panel state
+  const [showRefreshPanel, setShowRefreshPanel] = useState(false);
+  // Progress animation
+  const [animatingGoals, setAnimatingGoals] = useState<Set<string>>(new Set());
+  const [animatingStage, setAnimatingStage] = useState(false);
+  // Snapshot taken before each refresh so we can detect changes afterwards
+  const preRefreshSnapshot = useRef<{
+    stepId: number;
+    progressPercent: number;
+    completedGoalIds: Set<string>;
+  } | null>(null);
 
   // Auth guard
   useEffect(() => {
@@ -117,8 +126,8 @@ const Roadmap = () => {
           ?.status;
         if (status === 404) {
           reset();
-          setShowUpload(true);
-          setPageStatus("ready");
+          // No profile → redirect to setup flow
+          navigate("/setup", { replace: true });
           return;
         }
       }
@@ -134,13 +143,18 @@ const Roadmap = () => {
           : [];
         hydrate(loadedState, loadedGoals);
 
+        const hasData = !!loadedState || loadedGoals.length > 0;
+        if (!hasData) {
+          navigate("/setup", { replace: true });
+          return;
+        }
+
         if (loadedState) {
           const idx = (loadedState.currentStepId ?? 1) - 1;
           setCurrentIndex(Math.max(0, Math.min(4, idx)));
         }
 
-        const hasData = !!loadedState || loadedGoals.length > 0;
-        setShowUpload(!hasData);
+        setShowUpload(false);
       } catch {
         setShowUpload(true);
       } finally {
@@ -149,9 +163,9 @@ const Roadmap = () => {
     }
 
     loadData();
-  }, [accessToken, hydrate, reset]);
+  }, [accessToken, hydrate, reset, navigate]);
 
-  // After upload/sync success, update index from store
+  // Sync stage index whenever roadmapState changes (after refresh)
   useEffect(() => {
     if (roadmapState?.currentStepId) {
       const idx = roadmapState.currentStepId - 1;
@@ -159,18 +173,62 @@ const Roadmap = () => {
     }
   }, [roadmapState]);
 
-  const handleReset = async () => {
-    setResetting(true);
-    setShowResetConfirm(false);
-    try {
-      await resetAccountData();
-      reset();
-      setShowUpload(true);
-    } catch {
-      // non-critical
-    } finally {
-      setResetting(false);
+  /** Called when the refresh panel successfully loads new data. */
+  const handleRefreshSuccess = () => {
+    const store = useRoadmapStore.getState();
+    const newState = store.roadmapState;
+    const newGoals = store.goals;
+
+    const snap = preRefreshSnapshot.current;
+    if (snap && newState) {
+      const newStepId = newState.currentStepId ?? 1;
+      const newCompleted = new Set(
+        newGoals
+          .filter((g) => g.status === UserGoalStatus.COMPLETED)
+          .map((g) => g.goalId),
+      );
+
+      // Detect newly completed goals
+      const newlyCompleted = newGoals
+        .filter(
+          (g) =>
+            g.status === UserGoalStatus.COMPLETED &&
+            !snap.completedGoalIds.has(g.goalId),
+        )
+        .map((g) => g.goalId);
+
+      if (newlyCompleted.length > 0) {
+        setAnimatingGoals(new Set(newlyCompleted));
+        setTimeout(() => setAnimatingGoals(new Set()), 2000);
+      }
+
+      // Detect step advancement
+      if (newStepId > snap.stepId) {
+        setAnimatingStage(true);
+        setTimeout(() => setAnimatingStage(false), 2500);
+      }
+
+      void newCompleted; // suppress unused warning
     }
+
+    setShowRefreshPanel(false);
+  };
+
+  /** Capture state snapshot before opening the refresh panel. */
+  const openRefreshPanel = () => {
+    const store = useRoadmapStore.getState();
+    const state = store.roadmapState;
+    const goals = store.goals;
+    preRefreshSnapshot.current = {
+      stepId: state?.currentStepId ?? 1,
+      progressPercent: state?.progressPercent ?? 0,
+      completedGoalIds: new Set(
+        goals
+          .filter((g) => g.status === UserGoalStatus.COMPLETED)
+          .map((g) => g.goalId),
+      ),
+    };
+    setShowRefreshPanel((prev) => !prev);
   };
 
   if (!isAuthenticated) return null;
@@ -192,7 +250,6 @@ const Roadmap = () => {
 
   // Build stages for the visual component
   const currentStepId = roadmapState?.currentStepId ?? 1;
-  // Compute progress from live goal completion so the ring updates immediately
   const completedGoals = goals.filter(
     (g: UserGoal) => g.status === UserGoalStatus.COMPLETED,
   ).length;
@@ -207,42 +264,13 @@ const Roadmap = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <AppNavbar />
 
-      {/* Upload / no-data state */}
+      {/* Fallback upload state (e.g. if API fails at load time) */}
       {showUpload && (
         <main className="flex-1 p-4">
           <div className="max-w-lg mx-auto space-y-6 pt-4">
-            <div className="text-center space-y-2">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <UploadCloud className="w-8 h-8 text-primary" />
-              </div>
-              <h1 className="font-display text-2xl font-bold">
-                הגדרת המפה שלך
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                חבר את הבנק שלך או העלה דוח Open Finance כדי ליצור את התוכנית
-                האישית שלך.
-              </p>
-            </div>
-
-            <FinancialReportUpload
-              onSuccess={() => {
-                const updatedState = useRoadmapStore.getState().roadmapState;
-                if (updatedState?.currentStepId) {
-                  setCurrentIndex(updatedState.currentStepId - 1);
-                }
-                setShowUpload(false);
-              }}
-            />
-
-            <div className="relative flex items-center">
-              <div className="flex-1 border-t border-border" />
-              <span className="px-3 text-xs text-muted-foreground">
-                או התחבר ישירות
-              </span>
-              <div className="flex-1 border-t border-border" />
-            </div>
-
-            <BankSyncConnect
+            <DataLoadSection
+              title="הגדרת המפה שלך"
+              subtitle="חבר את הבנק שלך או העלה דוח Open Finance כדי ליצור את התוכנית האישית שלך."
               onSuccess={() => {
                 const updatedState = useRoadmapStore.getState().roadmapState;
                 if (updatedState?.currentStepId) {
@@ -284,7 +312,13 @@ const Roadmap = () => {
 
               {/* Stage meta */}
               <div>
-                <h2 className="font-display text-xl font-bold">
+                <h2
+                  className={`font-display text-xl font-bold transition-all duration-700 ${
+                    animatingStage
+                      ? "text-primary scale-105 animate-stage-pulse"
+                      : ""
+                  }`}
+                >
                   {currentStage.name}
                 </h2>
                 <p className="text-sm text-muted-foreground">
@@ -293,7 +327,9 @@ const Roadmap = () => {
               </div>
 
               {/* Goals from backend */}
-              {goals.length > 0 && <GoalList />}
+              {goals.length > 0 && (
+                <GoalList animatingGoalIds={animatingGoals} />
+              )}
 
               {/* Empty state for locked stage */}
               {currentStage.status === "locked" && (
@@ -317,41 +353,37 @@ const Roadmap = () => {
                 </div>
               )}
 
-              {/* Re-analyse / reset section */}
-              <div className="pt-4 border-t border-border">
-                {!showResetConfirm ? (
-                  <button
-                    onClick={() => setShowResetConfirm(true)}
-                    className="flex items-center gap-2 text-xs text-muted-foreground hover:text-destructive transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    אפס את הנתונים שלי והתחל מחדש
-                  </button>
-                ) : (
-                  <div className="glass-card p-4 space-y-3 border-destructive/20">
-                    <p className="text-sm font-medium text-destructive">
-                      פעולה זו תמחק את כל נתוני המפה לצמיתות.
+              {/* ── Refresh section ── */}
+              <div className="pt-4 border-t border-border space-y-3">
+                <button
+                  onClick={openRefreshPanel}
+                  className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  רענן נתונים
+                  {showRefreshPanel ? (
+                    <ChevronUp className="w-3 h-3" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3" />
+                  )}
+                </button>
+
+                {/* Inline collapsible refresh panel */}
+                {showRefreshPanel && (
+                  <div className="glass-card p-4 space-y-4 animate-fade-in">
+                    <p className="text-xs text-muted-foreground">
+                      העלה נתונים מעודכנים — ה-LLM יריץ ניתוח מחדש וישמר את
+                      ההתקדמות הקיימת שלך.
                     </p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleReset}
-                        disabled={resetting}
-                      >
-                        {resetting ? (
-                          <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                        ) : null}
-                        אשר איפוס
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowResetConfirm(false)}
-                      >
-                        ביטול
-                      </Button>
-                    </div>
+                    <DataLoadSection onSuccess={handleRefreshSuccess} />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowRefreshPanel(false)}
+                      className="w-full text-xs"
+                    >
+                      סגור
+                    </Button>
                   </div>
                 )}
               </div>

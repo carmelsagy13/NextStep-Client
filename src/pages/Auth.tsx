@@ -33,9 +33,7 @@ const Auth = () => {
       if (result.error) {
         setError(result.error);
       } else {
-        // userProfile is already fetched inside login(); check if profile exists
-        // by navigating — the roadmap page will redirect to questionnaire if needed
-        navigate("/roadmap");
+        navigate(result.redirectTo ?? "/roadmap");
       }
     } finally {
       setIsLoading(false);

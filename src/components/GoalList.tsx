@@ -18,7 +18,13 @@ function renderDescription(
   });
 }
 
-function GoalItem({ goal }: { goal: UserGoal }) {
+function GoalItem({
+  goal,
+  isAnimating,
+}: {
+  goal: UserGoal;
+  isAnimating?: boolean;
+}) {
   const markGoalComplete = useRoadmapStore((s) => s.markGoalComplete);
   const [completing, setCompleting] = useState(false);
 
@@ -67,7 +73,7 @@ function GoalItem({ goal }: { goal: UserGoal }) {
         isCompleted
           ? "border-primary/30 bg-primary/10"
           : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
-      }`}
+      } ${isAnimating ? "animate-goal-check" : ""}`}
     >
       <div className="flex items-start justify-between gap-3">
         {/* Icon + name */}
@@ -131,10 +137,9 @@ function GoalItem({ goal }: { goal: UserGoal }) {
             onClick={handleMarkComplete}
             disabled={completing}
             aria-label={`Mark "${goal.goalName}" as complete`}
-            className="shrink-0 flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white px-2.5 py-1 text-xs font-semibold text-black transition
-              hover:bg-gray-50 active:scale-95
-              disabled:cursor-not-allowed disabled:opacity-60
-              dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800"
+            className="shrink-0 flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground transition
+              hover:bg-primary/90 active:scale-95
+              disabled:cursor-not-allowed disabled:opacity-60"
           >
             {completing ? (
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -162,7 +167,12 @@ function GoalItem({ goal }: { goal: UserGoal }) {
   );
 }
 
-export default function GoalList() {
+interface GoalListProps {
+  /** Set of goalIds that should play the check-in animation. */
+  animatingGoalIds?: Set<string>;
+}
+
+export default function GoalList({ animatingGoalIds }: GoalListProps = {}) {
   const goals = useRoadmapStore((s) => s.goals);
 
   if (!goals || goals.length === 0) return null;
@@ -189,7 +199,11 @@ export default function GoalList() {
       {/* Goal items */}
       <div className="space-y-2.5">
         {goals.map((goal) => (
-          <GoalItem key={goal.goalId} goal={goal} />
+          <GoalItem
+            key={goal.goalId}
+            goal={goal}
+            isAnimating={animatingGoalIds?.has(goal.goalId)}
+          />
         ))}
       </div>
     </div>

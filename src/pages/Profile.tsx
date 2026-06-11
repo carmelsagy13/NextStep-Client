@@ -24,7 +24,7 @@ interface BackendProfile {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { userProfile: user, isAuthenticated } = useAuth();
   const [profile, setProfile] = useState<BackendProfile | null>(null);
   const [history, setHistory] = useState<UserProfileHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -139,7 +139,7 @@ const Profile = () => {
                     השלם את ההערכה הפיננסית שלך כדי לראות את שלב המפה.
                   </p>
                   <Link to="/roadmap">
-                    <Button size="sm" variant="outline">
+                    <Button size="sm">
                       עבור למפה
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
@@ -228,7 +228,7 @@ const Profile = () => {
                     המצב הכלכלי שלך השתנה? עדכן את ההערכה לקבלת מפת דרכים חדשה.
                   </p>
                   <Link to="/questionnaire">
-                    <Button variant="outline" size="sm">
+                    <Button size="sm">
                       מלא שאלון מחדש
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>

@@ -187,10 +187,9 @@ export default function FinancialReportUpload({ onSuccess }: Props) {
         type="button"
         onClick={handleSubmit}
         disabled={!file || status === "loading"}
-        className="w-full flex items-center justify-center gap-2 rounded-sm bg-black px-5 py-3 text-sm font-semibold text-white transition-all
-          hover:bg-gray-900 active:scale-[0.98]
-          disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black
-          dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:disabled:hover:bg-white"
+        className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-all
+          hover:bg-primary/90 active:scale-[0.98]
+          disabled:cursor-not-allowed disabled:opacity-50"
       >
         {status === "loading" ? (
           <>
