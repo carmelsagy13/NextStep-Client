@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Register from "./pages/Register";
 import Questionnaire from "./pages/Questionnaire";
 import Roadmap from "./pages/Roadmap";
 import DataCenter from "./pages/DataCenter";
@@ -26,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/questionnaire" element={<Questionnaire />} />
             <Route path="/roadmap" element={<Roadmap />} />
             <Route path="/data-center" element={<DataCenter />} />

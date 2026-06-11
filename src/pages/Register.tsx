@@ -1,13 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Loader2, AlertCircle, Eye, EyeOff, TrendingUp } from "lucide-react";
-import { register } from "../api/auth.api";
-import { useAuthStore } from "../store/authStore";
-import type { AuthResponse } from "../types";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Register() {
   const navigate = useNavigate();
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const { signup } = useAuth();
 
   const [id, setId] = useState("");
   const [email, setEmail] = useState("");
@@ -35,18 +33,12 @@ export default function Register() {
 
     setIsSubmitting(true);
     try {
-      const { data } = await register(id.trim(), email.trim(), password);
-      const { accessToken, userId } = data as AuthResponse;
-      setAuth(accessToken, userId);
-      navigate("/analyze");
-    } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: { data?: { message?: string }; status?: number };
-      };
-      setError(
-        axiosErr.response?.data?.message ??
-          "Something went wrong. Please try again.",
-      );
+      const result = await signup(id.trim(), email.trim(), password);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        navigate("/questionnaire");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -193,7 +185,7 @@ export default function Register() {
         <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
           Already have an account?{" "}
           <Link
-            to="/login"
+            to="/auth"
             className="font-semibold text-black hover:text-gray-700 dark:text-white dark:hover:text-gray-300 transition-colors"
           >
             Log in

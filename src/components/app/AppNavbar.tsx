@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, User, Map, LogOut, BookOpen, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
-import logo from "@/assets/logo.png";
 
 const AppNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,7 +43,7 @@ const AppNavbar = () => {
 
         {/* Logo — centered */}
         <Link to="/" className="absolute left-1/2 -translate-x-1/2">
-          <img src={logo} alt="NextStep" className="h-8" />
+          <img src="/IconNoText.png" alt="NextStep" className="h-8" />
         </Link>
 
         {/* Burger menu button */}

@@ -4,20 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { getProfile } from "@/api/profile.api";
-import { ArrowLeft, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login, signup, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
@@ -32,38 +28,18 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const result = isLogin
-        ? await login(email, password)
-        : await signup(email, password, name);
+      const result = await login(email, password);
 
       if (result.error) {
         setError(result.error);
       } else {
-        // Check if user has completed the questionnaire (profile exists)
-        try {
-          await getProfile();
-          // Profile exists → go to roadmap
-          navigate("/roadmap");
-        } catch (profileErr) {
-          const status = (profileErr as { response?: { status?: number } })
-            .response?.status;
-          if (status === 404) {
-            // No profile yet → send to questionnaire
-            navigate("/questionnaire");
-          } else {
-            // Non-404 error (e.g. server down) → default to questionnaire
-            navigate("/questionnaire");
-          }
-        }
+        // userProfile is already fetched inside login(); check if profile exists
+        // by navigating — the roadmap page will redirect to questionnaire if needed
+        navigate("/roadmap");
       }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setError("");
   };
 
   return (
@@ -93,15 +69,11 @@ const Auth = () => {
           {/* Logo & Title */}
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-4">
-              <img src={logo} alt="NextStep" className="h-12" />
+              <img src="/IconNoText.png" alt="NextStep" className="h-12" />
             </div>
-            <h1 className="font-display text-3xl font-bold">
-              {isLogin ? "ברוך שובך" : "צור את החשבון שלך"}
-            </h1>
+            <h1 className="font-display text-3xl font-bold">ברוך שובך</h1>
             <p className="text-muted-foreground">
-              {isLogin
-                ? "התחבר כדי להמשיך את המסע הפיננסי שלך"
-                : "התחל את המסע שלך לחופש פיננסי"}
+              התחבר כדי להמשיך את המסע הפיננסי שלך
             </p>
           </div>
 
@@ -110,30 +82,7 @@ const Auth = () => {
             onSubmit={handleSubmit}
             className="glass-card-elevated p-8 space-y-6"
           >
-            {error && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-                {error}
-              </div>
-            )}
-
             <div className="space-y-4">
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="name">שם</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="השם שלך"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              )}
-
               <div className="space-y-2">
                 <Label htmlFor="email">אימייל</Label>
                 <div className="relative">
@@ -176,10 +125,16 @@ const Auth = () => {
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Minimum 6 characters
-                </p>
               </div>
+            </div>
+
+            {/* Error sits below inputs — min-h keeps layout stable when empty */}
+            <div className="min-h-[2.5rem]">
+              {error && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                  {error}
+                </div>
+              )}
             </div>
 
             <Button
@@ -187,25 +142,19 @@ const Auth = () => {
               className="w-full h-12 text-base"
               disabled={isLoading}
             >
-              {isLoading
-                ? isLogin
-                  ? "מתחבר..."
-                  : "יוצר חשבון..."
-                : isLogin
-                  ? "התחבר"
-                  : "צור חשבון"}
+              {isLoading ? "מתחבר..." : "התחבר"}
             </Button>
           </form>
 
-          {/* Toggle mode */}
+          {/* Register link */}
           <p className="text-center text-sm text-muted-foreground">
-            {isLogin ? "אין לך חשבון? " : "כבר יש לך חשבון? "}
-            <button
-              onClick={toggleMode}
+            אין לך חשבון?{" "}
+            <Link
+              to="/register"
               className="text-primary hover:text-primary/80 font-medium transition-colors"
             >
-              {isLogin ? "הירשם" : "התחבר"}
-            </button>
+              הירשם
+            </Link>
           </p>
         </div>
       </main>

@@ -5,19 +5,21 @@ import {
   register as apiRegister,
   logout as apiLogout,
 } from "../api/auth.api";
-
-interface User {
-  email: string;
-  name?: string;
-  userId: string;
-}
+import { getProfile } from "../api/profile.api";
 
 /**
- * Drop-in replacement for the charming-gems localStorage-based useAuth hook.
- * Wraps the real Zustand authStore + NestJS auth API.
+ * Auth hook — session-only. No data is persisted to localStorage.
+ * User profile is fetched from the server on every login so it is always fresh.
  */
 export function useAuth() {
-  const { accessToken, userId, setAuth, clearAuth } = useAuthStore();
+  const {
+    accessToken,
+    userId,
+    userProfile,
+    setAuth,
+    setUserProfile,
+    clearAuth,
+  } = useAuthStore();
 
   const login = useCallback(
     async (email: string, password: string): Promise<{ error?: string }> => {
@@ -25,7 +27,13 @@ export function useAuth() {
         const res = await apiLogin(email, password);
         const { accessToken: token, userId: uid } = res.data;
         setAuth(token, uid);
-        localStorage.setItem("userEmail", email);
+        // Always fetch fresh user details after login
+        try {
+          const profileRes = await getProfile();
+          setUserProfile(profileRes.data);
+        } catch {
+          // Profile may not exist yet (new user) — not an error
+        }
         return {};
       } catch (err) {
         const msg = (
@@ -35,21 +43,19 @@ export function useAuth() {
         return { error: errorText || "Invalid credentials. Please try again." };
       }
     },
-    [setAuth],
+    [setAuth, setUserProfile],
   );
 
   const signup = useCallback(
     async (
+      id: string,
       email: string,
       password: string,
-      name?: string,
     ): Promise<{ error?: string }> => {
       try {
-        const res = await apiRegister(email, password);
+        const res = await apiRegister(id, email, password);
         const { accessToken: token, userId: uid } = res.data;
         setAuth(token, uid);
-        localStorage.setItem("userEmail", email);
-        if (name) localStorage.setItem("userName", name);
         return {};
       } catch (err) {
         const msg = (
@@ -68,25 +74,16 @@ export function useAuth() {
     } catch {
       // best-effort
     }
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userName");
     clearAuth();
   }, [clearAuth]);
-
-  const user: User | null = userId
-    ? {
-        email: localStorage.getItem("userEmail") || "",
-        name: localStorage.getItem("userName") || undefined,
-        userId,
-      }
-    : null;
 
   return {
     login,
     signup,
     logout,
     isAuthenticated: !!accessToken,
-    user,
+    userId,
+    userProfile,
     isLoading: false,
   };
 }
