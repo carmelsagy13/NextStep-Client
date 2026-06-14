@@ -14,6 +14,8 @@ interface ConfettiProps {
   durationMs?: number;
 }
 
+type Shape = "rect" | "circle" | "ribbon";
+
 interface Piece {
   x: number;
   y: number;
@@ -23,29 +25,41 @@ interface Piece {
   rotation: number;
   rotationSpeed: number;
   color: string;
+  shape: Shape;
   tilt: number;
+  tiltSpeed: number;
+  swayPhase: number;
+  swayAmp: number;
 }
 
+// A softer, more festive palette with a couple of gold accents.
 const COLORS = [
-  "#22c55e", // green
-  "#3b82f6", // blue
-  "#f59e0b", // amber
-  "#ef4444", // red
-  "#a855f7", // purple
-  "#ec4899", // pink
-  "#14b8a6", // teal
+  "#34d399", // emerald
+  "#60a5fa", // blue
+  "#fbbf24", // gold
+  "#f87171", // coral
+  "#c084fc", // violet
+  "#f472b6", // pink
+  "#2dd4bf", // teal
+  "#facc15", // yellow
+  "#fb923c", // orange
 ];
+
+const SHAPES: Shape[] = ["rect", "circle", "ribbon"];
 
 /**
  * Lightweight, dependency-free confetti overlay rendered on a full-screen
  * canvas. Mainly intended to celebrate the user advancing to the next
  * roadmap stage, but reusable anywhere a quick celebration is needed.
+ *
+ * The motion is intentionally slow and gentle: pieces drift down with light
+ * gravity, sway side to side, and tumble while fading out near the end.
  */
 export default function Confetti({
   fire,
   onComplete,
-  pieceCount = 160,
-  durationMs = 2800,
+  pieceCount = 200,
+  durationMs = 5200,
 }: ConfettiProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameRef = useRef<number | null>(null);
@@ -58,56 +72,99 @@ export default function Confetti({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    const dpr = window.devicePixelRatio || 1;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
 
-    const handleResize = () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+    const sizeCanvas = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
-    window.addEventListener("resize", handleResize);
+    sizeCanvas();
+    window.addEventListener("resize", sizeCanvas);
 
-    // Seed pieces from two bottom corners + the top, drifting downward.
+    // Seed pieces above the viewport so they drift gently into view.
     const pieces: Piece[] = Array.from({ length: pieceCount }, () => ({
       x: Math.random() * width,
-      y: Math.random() * -height * 0.5,
-      vx: (Math.random() - 0.5) * 6,
-      vy: Math.random() * 4 + 3,
-      size: Math.random() * 8 + 4,
-      rotation: Math.random() * 360,
-      rotationSpeed: (Math.random() - 0.5) * 12,
+      y: Math.random() * -height,
+      vx: (Math.random() - 0.5) * 1.2,
+      vy: Math.random() * 1.1 + 0.7,
+      size: Math.random() * 7 + 5,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.08,
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      tilt: Math.random() * 2 * Math.PI,
+      shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+      tilt: Math.random() * Math.PI * 2,
+      tiltSpeed: Math.random() * 0.04 + 0.02,
+      swayPhase: Math.random() * Math.PI * 2,
+      swayAmp: Math.random() * 1.1 + 0.4,
     }));
 
     const start = performance.now();
-    const gravity = 0.12;
+    let last = start;
+    const gravity = 0.018;
+    const terminalVy = 2.4;
 
     const render = (now: number) => {
       const elapsed = now - start;
+      // Normalize movement to ~60fps so speed is frame-rate independent.
+      const dt = Math.min(2, (now - last) / 16.6667);
+      last = now;
+
       ctx.clearRect(0, 0, width, height);
 
-      // Fade out over the final 600ms.
-      const fade = Math.max(0, Math.min(1, (durationMs - elapsed) / 600));
-      ctx.globalAlpha = fade;
+      // Gentle fade over the final 1200ms.
+      const fade = Math.max(0, Math.min(1, (durationMs - elapsed) / 1200));
 
       for (const p of pieces) {
-        p.vy += gravity;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.rotation += p.rotationSpeed;
-        p.tilt += 0.05;
+        p.vy = Math.min(terminalVy, p.vy + gravity * dt);
+        p.swayPhase += p.tiltSpeed * dt;
+        p.x += (p.vx + Math.sin(p.swayPhase) * p.swayAmp) * dt;
+        p.y += p.vy * dt;
+        p.rotation += p.rotationSpeed * dt;
+        p.tilt += p.tiltSpeed * dt;
+
+        // Wrap horizontally so the field stays full.
+        if (p.x < -20) p.x = width + 20;
+        else if (p.x > width + 20) p.x = -20;
 
         ctx.save();
+        ctx.globalAlpha = fade;
         ctx.translate(p.x, p.y);
-        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.rotate(p.rotation);
         ctx.fillStyle = p.color;
-        const wobble = Math.cos(p.tilt) * (p.size / 2);
-        ctx.fillRect(-p.size / 2, -p.size / 2, p.size + wobble, p.size);
+
+        // `flutter` squashes the piece on one axis to fake 3D tumbling.
+        const flutter = Math.cos(p.tilt);
+
+        if (p.shape === "circle") {
+          ctx.beginPath();
+          ctx.ellipse(
+            0,
+            0,
+            p.size / 2,
+            (p.size / 2) * Math.max(0.25, Math.abs(flutter)),
+            0,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        } else if (p.shape === "ribbon") {
+          const w = p.size * 0.5;
+          const h = p.size * 1.8 * Math.max(0.25, Math.abs(flutter));
+          ctx.fillRect(-w / 2, -h / 2, w, h);
+        } else {
+          const h = p.size * Math.max(0.25, Math.abs(flutter));
+          ctx.fillRect(-p.size / 2, -h / 2, p.size, h);
+        }
+
         ctx.restore();
       }
-
-      ctx.globalAlpha = 1;
 
       if (elapsed < durationMs) {
         frameRef.current = requestAnimationFrame(render);
@@ -121,7 +178,7 @@ export default function Confetti({
 
     return () => {
       if (frameRef.current != null) cancelAnimationFrame(frameRef.current);
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", sizeCanvas);
       ctx.clearRect(0, 0, width, height);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
