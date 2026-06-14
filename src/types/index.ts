@@ -83,6 +83,11 @@ export interface RoadmapState {
   currentStepId: number;
   progressPercent: number;
   stateDescription: string;
+  // Resilient aliases for the backend `progress_percents` column, which may
+  // be serialised in snake_case or with a plural name.
+  progressPercents?: number;
+  progress_percent?: number;
+  progress_percents?: number;
 }
 
 export interface RoadmapResponse {

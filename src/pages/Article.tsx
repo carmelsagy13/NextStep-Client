@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import AppNavbar from "@/components/app/AppNavbar";
 import { getArticleById, getCategoryById } from "@/data/articles";
-import { ArrowLeft, Clock, BookOpen } from "lucide-react";
+import { ArrowRight, Clock, BookOpen } from "lucide-react";
 
 const Article = () => {
   const { articleId } = useParams<{ articleId: string }>();
@@ -10,13 +10,13 @@ const Article = () => {
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col" dir="rtl">
         <AppNavbar />
         <main className="flex-1 p-4 flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-2">Article Not Found</h1>
+            <h1 className="text-2xl font-bold mb-2">המאמר לא נמצא</h1>
             <Link to="/data-center" className="text-primary hover:underline">
-              Back to Knowledge Hub
+              חזרה למרכז הידע
             </Link>
           </div>
         </main>
@@ -82,7 +82,7 @@ const Article = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col" dir="rtl">
       <AppNavbar />
 
       <main className="flex-1 px-6 py-4">
@@ -92,8 +92,8 @@ const Article = () => {
             to={`/category/${article.category}`}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
-            {category?.title || "Back"}
+            <ArrowRight className="w-4 h-4" />
+            {category?.title || "חזרה"}
           </Link>
 
           {/* Article header */}
@@ -104,7 +104,7 @@ const Article = () => {
               </span>
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {article.readTime} min read
+                {article.readTime} דק׳ קריאה
               </span>
             </div>
 
@@ -127,7 +127,7 @@ const Article = () => {
               className="inline-flex items-center gap-2 text-primary hover:underline"
             >
               <BookOpen className="w-4 h-4" />
-              More articles in {category?.title}
+              עוד מאמרים ב{category?.title}
             </Link>
           </div>
         </div>

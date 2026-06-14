@@ -12,332 +12,335 @@ export const articles: Article[] = [
   // Investing Basics
   {
     id: "what-is-investing",
-    title: "What is Investing? A Beginner's Guide",
-    excerpt: "Learn the fundamentals of investing and why it matters for your financial future.",
-    content: `Investing is the act of putting your money to work for you. Instead of letting your money sit idle in a checking account, investing allows it to grow over time through various financial instruments.
+    title: "מה זה השקעה? מדריך למתחילים",
+    excerpt: "הכירו את עקרונות היסוד של השקעה ולמה היא חשובה לעתיד הפיננסי שלכם.",
+    content: `השקעה היא הפעולה של לגרום לכסף שלכם לעבוד עבורכם. במקום להשאיר את הכסף מונח ללא תנועה בעובר ושב, השקעה מאפשרת לו לצמוח לאורך זמן באמצעות מכשירים פיננסיים שונים.
 
-## Why Invest?
+## למה להשקיע?
 
-The primary reason to invest is to build wealth over time. While saving money is important, inflation can erode the purchasing power of cash sitting in a bank account. Investing helps your money grow faster than inflation.
+הסיבה המרכזית להשקיע היא לבנות הון לאורך זמן. חיסכון הוא חשוב, אבל האינפלציה שוחקת את כוח הקנייה של מזומן שיושב בבנק. השקעה עוזרת לכסף שלכם לצמוח מהר יותר מהאינפלציה.
 
-## Types of Investments
+## סוגי השקעות
 
-1. **Stocks** - Ownership shares in a company
-2. **Bonds** - Loans to companies or governments
-3. **Mutual Funds** - Pooled investments managed by professionals
-4. **ETFs** - Exchange-traded funds that track various indexes
-5. **Real Estate** - Property investments
+1. **מניות** – בעלות על חלק מחברה
+2. **אגרות חוב** – הלוואות לחברות או לממשלות
+3. **קרנות נאמנות** – השקעות מאוגדות המנוהלות על ידי אנשי מקצוע
+4. **תעודות סל (ETF)** – קרנות הנסחרות בבורסה ועוקבות אחר מדדים שונים
+5. **נדל"ן** – השקעה בנכסים
 
-## Getting Started
+## איך מתחילים
 
-Start small and learn as you go. Many platforms allow you to begin investing with as little as ₪100. The key is to start early and be consistent.`,
+התחילו בקטן ולמדו תוך כדי תנועה. פלטפורמות רבות מאפשרות להתחיל להשקיע כבר מ-₪100. המפתח הוא להתחיל מוקדם ולהתמיד.`,
     category: "investing-basics",
     readTime: 5,
   },
   {
     id: "compound-interest",
-    title: "The Magic of Compound Interest",
-    excerpt: "Discover how compound interest can exponentially grow your wealth over time.",
-    content: `Compound interest is often called the eighth wonder of the world. It's the process where your money earns interest, and then that interest earns interest too.
+    title: "הקסם של ריבית דריבית",
+    excerpt: "גלו כיצד ריבית דריבית יכולה להגדיל את ההון שלכם באופן מעריכי לאורך זמן.",
+    content: `ריבית דריבית מכונה לעיתים "הפלא השמיני של העולם". זהו תהליך שבו הכסף שלכם מרוויח ריבית, ואז גם הריבית עצמה מרוויחה ריבית.
 
-## How It Works
+## איך זה עובד
 
-If you invest ₪10,000 at 7% annual return:
-- Year 1: ₪10,700
-- Year 5: ₪14,025
-- Year 10: ₪19,672
-- Year 20: ₪38,697
-- Year 30: ₪76,123
+אם תשקיעו ₪10,000 בתשואה שנתית של 7%:
+- שנה 1: ₪10,700
+- שנה 5: ₪14,025
+- שנה 10: ₪19,672
+- שנה 20: ₪38,697
+- שנה 30: ₪76,123
 
-## The Rule of 72
+## כלל ה-72
 
-A quick way to estimate how long it takes to double your money: divide 72 by your interest rate. At 7% return, your money doubles approximately every 10.3 years.
+דרך מהירה להעריך כמה זמן ייקח להכפיל את הכסף: חלקו 72 בשיעור הריבית. בתשואה של 7%, הכסף שלכם מכפיל את עצמו בערך כל 10.3 שנים.
 
-## Start Early
+## להתחיל מוקדם
 
-The earlier you start, the more time compound interest has to work. Starting at 25 vs 35 can mean hundreds of thousands of shekels difference by retirement.`,
+ככל שתתחילו מוקדם יותר, כך יהיה לריבית דריבית יותר זמן לפעול. התחלה בגיל 25 לעומת 35 יכולה להסתכם בהפרש של מאות אלפי שקלים עד הפרישה.`,
     category: "investing-basics",
     readTime: 4,
   },
   {
     id: "risk-vs-reward",
-    title: "Understanding Risk vs Reward",
-    excerpt: "Learn how to balance risk and potential returns in your investment strategy.",
-    content: `Every investment carries some level of risk. Understanding the relationship between risk and reward is crucial for making informed decisions.
+    title: "להבין סיכון מול תשואה",
+    excerpt: "למדו כיצד לאזן בין סיכון לבין תשואה פוטנציאלית באסטרטגיית ההשקעה שלכם.",
+    content: `כל השקעה נושאת רמת סיכון מסוימת. הבנת הקשר בין סיכון לתשואה היא קריטית לקבלת החלטות מושכלות.
 
-## The Risk-Reward Relationship
+## הקשר בין סיכון לתשואה
 
-Generally, higher potential returns come with higher risks. Conservative investments like government bonds offer stability but lower returns, while stocks can provide higher returns with more volatility.
+ככלל, פוטנציאל תשואה גבוה יותר מגיע עם סיכון גבוה יותר. השקעות סולידיות כמו אגרות חוב ממשלתיות מציעות יציבות אך תשואה נמוכה, בעוד שמניות יכולות לספק תשואה גבוהה יותר עם תנודתיות רבה יותר.
 
-## Diversification
+## פיזור (דיברסיפיקציה)
 
-Don't put all your eggs in one basket. Spreading investments across different asset classes reduces overall risk while maintaining growth potential.
+אל תשימו את כל הביצים בסל אחד. פיזור ההשקעות בין אפיקי נכסים שונים מפחית את הסיכון הכולל תוך שמירה על פוטנציאל הצמיחה.
 
-## Your Risk Tolerance
+## רמת הסיכון שלכם
 
-Consider your age, financial goals, and emotional comfort with market fluctuations when determining your risk tolerance.`,
+קחו בחשבון את הגיל שלכם, המטרות הפיננסיות שלכם והנוחות הרגשית שלכם עם תנודות בשוק כשאתם קובעים את רמת הסיכון המתאימה לכם.`,
     category: "investing-basics",
     readTime: 6,
   },
   // Emergency Funds
   {
     id: "emergency-fund-basics",
-    title: "Building Your Emergency Fund",
-    excerpt: "Why you need an emergency fund and how to build one from scratch.",
-    content: `An emergency fund is your financial safety net. It's money set aside specifically for unexpected expenses or income loss.
+    title: "בניית קרן החירום שלכם",
+    excerpt: "למה אתם צריכים קרן חירום וכיצד לבנות אותה מאפס.",
+    content: `קרן חירום היא רשת הביטחון הפיננסית שלכם. זהו כסף שמושם בצד במיוחד עבור הוצאות בלתי צפויות או אובדן הכנסה.
 
-## Why You Need One
+## למה אתם צריכים קרן כזו
 
-Life is unpredictable. Job loss, medical emergencies, car repairs, or home maintenance can happen at any time. Without an emergency fund, you might be forced to take on debt or sell investments at a loss.
+החיים בלתי צפויים. פיטורים, מצב רפואי חירומי, תיקון רכב או תחזוקת בית יכולים לקרות בכל רגע. בלי קרן חירום, אתם עלולים להיאלץ לקחת הלוואות או למכור השקעות בהפסד.
 
-## How Much to Save
+## כמה לחסוך
 
-Most financial experts recommend saving 3-6 months of living expenses. If your job is less stable or you're self-employed, aim for 6-12 months.
+רוב המומחים הפיננסיים ממליצים לחסוך הוצאות מחיה של 3 עד 6 חודשים. אם העבודה שלכם פחות יציבה או שאתם עצמאים, כוונו ל-6 עד 12 חודשים.
 
-## Where to Keep It
+## איפה להחזיק אותה
 
-Your emergency fund should be easily accessible but separate from your regular checking account. High-yield savings accounts are ideal.
+קרן החירום שלכם צריכה להיות נזילה וזמינה בקלות, אך נפרדת מחשבון העובר ושב הרגיל. פיקדונות או קרנות כספיות נזילות הם אפיק מתאים.
 
-## Building Your Fund
+## בניית הקרן
 
-Start with a goal of ₪5,000, then work up to one month of expenses. Automate transfers to make saving effortless.`,
+התחילו עם יעד של ₪5,000, ואז התקדמו עד לחודש שלם של הוצאות. הגדירו הפקדה אוטומטית כדי שהחיסכון יהיה ללא מאמץ.`,
     category: "emergency-funds",
     readTime: 5,
     featured: true,
   },
   {
     id: "emergency-vs-savings",
-    title: "Emergency Fund vs Regular Savings",
-    excerpt: "Understanding the difference between emergency funds and other savings goals.",
-    content: `Not all savings are created equal. Understanding the difference between emergency funds and other savings helps you allocate money properly.
+    title: "קרן חירום מול חיסכון רגיל",
+    excerpt: "להבין את ההבדל בין קרן חירום לבין יעדי חיסכון אחרים.",
+    content: `לא כל חיסכון נולד שווה. הבנת ההבדל בין קרן חירום לבין חיסכון אחר עוזרת לכם להקצות את הכסף נכון.
 
-## Emergency Funds
+## קרן חירום
 
-- For unexpected, necessary expenses
-- Should be highly liquid
-- Not for planned purchases
-- Typically 3-6 months of expenses
+- מיועדת להוצאות הכרחיות ובלתי צפויות
+- צריכה להיות נזילה מאוד
+- לא מיועדת לרכישות מתוכננות
+- בדרך כלל הוצאות של 3 עד 6 חודשים
 
-## Regular Savings
+## חיסכון רגיל
 
-- For planned future expenses
-- Can be less liquid
-- Vacation funds, down payments, etc.
-- Amount varies by goal
+- מיועד להוצאות עתידיות מתוכננות
+- יכול להיות פחות נזיל
+- חיסכון לחופשה, מקדמה לדירה וכדומה
+- הסכום משתנה לפי המטרה
 
-## Keep Them Separate
+## שמרו עליהם בנפרד
 
-Having separate accounts for different purposes helps you avoid dipping into your emergency fund for non-emergencies.`,
+ניהול חשבונות נפרדים למטרות שונות עוזר לכם להימנע מלגעת בקרן החירום עבור הוצאות שאינן חירום.`,
     category: "emergency-funds",
     readTime: 4,
   },
   // Pension & Retirement
   {
     id: "pension-basics-israel",
-    title: "Understanding Pensions in Israel",
-    excerpt: "A comprehensive guide to the Israeli pension system and your options.",
-    content: `Israel's pension system has evolved significantly. Understanding your options is crucial for a secure retirement.
+    title: "להבין את מערכת הפנסיה בישראל",
+    excerpt: "מדריך מקיף למערכת הפנסיה הישראלית ולאפשרויות העומדות בפניכם.",
+    content: `מערכת הפנסיה בישראל התפתחה מאוד בשנים האחרונות. הבנת האפשרויות שלכם היא קריטית לפרישה בטוחה.
 
-## Types of Pension Plans
+## סוגי מכשירי חיסכון פנסיוני
 
-1. **Comprehensive Pension Funds** - Provide retirement savings plus insurance
-2. **Provident Funds** - Pure savings with more flexibility
-3. **Managers' Insurance** - Insurance-based savings plans
+1. **קרן פנסיה מקיפה** – חיסכון לפרישה בתוספת כיסוי ביטוחי לנכות ולשארים
+2. **קופת גמל** – חיסכון עם גמישות רבה יותר
+3. **ביטוח מנהלים** – תכנית חיסכון על בסיס ביטוחי
 
-## Employer Contributions
+## הפרשות המעסיק
 
-By law, employers must contribute to your pension. The current minimum is:
-- Employee: 6% of salary
-- Employer: 6.5% for savings + additional for disability/survivors
+על פי צו ההרחבה לפנסיה חובה, מעסיקים חייבים להפריש לפנסיה שלכם. שיעורי ההפרשה המלאים הם:
+- תגמולי עובד: 6% מהשכר
+- תגמולי מעסיק: 6.5% מהשכר
+- רכיב פיצויים מצד המעסיק: 6% מהשכר
 
-## Tax Benefits
+בסה״כ מופרשים כ-18.5% מהשכר לחיסכון הפנסיוני שלכם.
 
-Pension contributions receive tax benefits up to certain limits. Take advantage of these to maximize your savings.`,
+## הטבות מס
+
+הפקדות לפנסיה מזכות בהטבות מס עד תקרות מסוימים. נצלו אותן כדי למקסם את החיסכון שלכם.`,
     category: "pension-retirement",
     readTime: 7,
   },
   {
     id: "retirement-planning",
-    title: "When to Start Planning for Retirement",
-    excerpt: "It's never too early to start planning. Learn why starting young matters.",
-    content: `The best time to start planning for retirement was yesterday. The second best time is today.
+    title: "מתי להתחיל לתכנן את הפרישה",
+    excerpt: "אף פעם לא מוקדם מדי להתחיל. למדו למה התחלה בגיל צעיר כל כך חשובה.",
+    content: `הזמן הטוב ביותר להתחיל לתכנן פרישה היה אתמול. הזמן הטוב השני ביותר הוא היום.
 
-## The Power of Starting Early
+## הכוח שבהתחלה מוקדמת
 
-Starting at 25 vs 35 can mean retiring with double the savings, even if you contribute the same total amount.
+התחלה בגיל 25 לעומת 35 יכולה להסתכם בפרישה עם כפל החיסכון, גם אם תפקידו את אותו סכום כולל.
 
-## Setting Retirement Goals
+## הגדרת יעדי פרישה
 
-Calculate how much you'll need based on:
-- Desired lifestyle in retirement
-- Expected pension income
-- Healthcare costs
-- Inflation
+חשבו כמה תזדקקו על סמך:
+- אורח החיים הרצוי בפרישה
+- הכנסה צפויה מפנסיה
+- עלויות בריאות
+- אינפלציה
 
-## Action Steps
+## צעדים לפעולה
 
-1. Understand your current pension contributions
-2. Calculate your retirement gap
-3. Consider additional savings vehicles
-4. Review and adjust annually`,
+1. הבינו את ההפרשות הפנסיוניות הנוכחיות שלכם
+2. חשבו את פער הפרישה שלכם
+3. שקלו מכשירי חיסכון נוספים
+4. בדקו ועדכנו מדי שנה`,
     category: "pension-retirement",
     readTime: 5,
   },
   // Budgeting Tips
   {
     id: "50-30-20-rule",
-    title: "The 50/30/20 Budget Rule",
-    excerpt: "A simple framework for allocating your income effectively.",
-    content: `The 50/30/20 rule is a straightforward budgeting method that helps you balance spending and saving.
+    title: "כלל התקציב 50/30/20",
+    excerpt: "מתודה פשוטה לחלוקת ההכנסה שלכם באופן יעיל.",
+    content: `כלל 50/30/20 הוא שיטת תקצוב פשוטה העוזרת לכם לאזן בין הוצאות לחיסכון.
 
-## The Breakdown
+## החלוקה
 
-- **50% Needs**: Rent, utilities, groceries, insurance, minimum debt payments
-- **30% Wants**: Entertainment, dining out, hobbies, subscriptions
-- **20% Savings**: Emergency fund, investments, extra debt payments
+- **50% צרכים**: שכר דירה, חשבונות, מזון, ביטוח, תשלומי חוב מינימליים
+- **30% רצונות**: בילויים, אוכל בחוץ, תחביבים, מנויים
+- **20% חיסכון**: קרן חירום, השקעות, תשלומי חוב נוספים
 
-## Adapting to Your Situation
+## התאמה למצב שלכם
 
-This is a guideline, not a rule. High cost of living areas might require adjusting to 60/20/20. The key is finding a sustainable balance.
+זוהי המלצה, לא חוק. באזורים יקרים למגורים כמו מרכז הארץ ייתכן שתצטרכו להתאים ל-60/20/20. המפתח הוא למצוא איזון בר-קיימא.
 
-## Getting Started
+## איך מתחילים
 
-1. Track your spending for a month
-2. Categorize expenses as needs, wants, or savings
-3. Identify areas to adjust
-4. Automate your savings`,
+1. עקבו אחר ההוצאות שלכם במשך חודש
+2. סווגו הוצאות כצרכים, רצונות או חיסכון
+3. זהו תחומים לשיפור
+4. הפכו את החיסכון לאוטומטי`,
     category: "budgeting-tips",
     readTime: 4,
   },
   {
     id: "tracking-expenses",
-    title: "How to Track Your Expenses",
-    excerpt: "Practical methods for understanding where your money goes.",
-    content: `You can't manage what you don't measure. Tracking expenses is the foundation of good financial health.
+    title: "איך לעקוב אחר ההוצאות שלכם",
+    excerpt: "שיטות מעשיות להבנת איפה הכסף שלכם הולך.",
+    content: `אי אפשר לנהל מה שלא מודדים. מעקב אחר הוצאות הוא הבסיס לבריאות פיננסית טובה.
 
-## Methods
+## שיטות
 
-1. **Apps**: Automatic categorization and insights
-2. **Spreadsheets**: Full control and customization
-3. **Envelope system**: Physical cash allocation
-4. **Bank statements**: Monthly review of transactions
+1. **אפליקציות**: סיווג אוטומטי ותובנות
+2. **גיליונות אלקטרוניים**: שליטה מלאה והתאמה אישית
+3. **שיטת המעטפות**: הקצאת מזומן פיזית
+4. **דפי חשבון הבנק**: סקירה חודשית של התנועות
 
-## Key Categories to Track
+## קטגוריות מרכזיות למעקב
 
-- Housing
-- Transportation
-- Food (groceries vs dining out)
-- Utilities
-- Entertainment
-- Subscriptions
-- Personal care
+- דיור
+- תחבורה
+- מזון (קניות מול אוכל בחוץ)
+- חשבונות ותשתיות
+- בילויים
+- מנויים
+- טיפוח אישי
 
-## Review Regularly
+## סקירה קבועה
 
-Set a weekly or monthly date to review your spending. Look for patterns and areas to optimize.`,
+קבעו מועד שבועי או חודשי לסקירת ההוצאות. חפשו דפוסים ותחומים לייעול.`,
     category: "budgeting-tips",
     readTime: 5,
   },
   // Financial Literacy
   {
     id: "financial-hierarchy",
-    title: "Understanding the Financial Hierarchy of Needs",
-    excerpt: "Just like Maslow's hierarchy, your financial journey follows a logical progression.",
-    content: `Just like Maslow's hierarchy, your financial journey follows a logical progression. Learn why building an emergency fund comes before investing, and how to know when you're ready for the next step.
+    title: "להבין את מדרג הצרכים הפיננסי",
+    excerpt: "בדיוק כמו מדרג הצרכים של מאסלו, המסע הפיננסי שלכם מתקדם בסדר הגיוני.",
+    content: `בדיוק כמו מדרג הצרכים של מאסלו, המסע הפיננסי שלכם מתקדם בסדר הגיוני. למדו למה בניית קרן חירום קודמת להשקעה, וכיצד לדעת מתי אתם מוכנים לשלב הבא.
 
-## The Financial Pyramid
+## הפירמידה הפיננסית
 
-**Level 1: Foundation**
-- Basic budgeting
-- Paying essential bills
-- Minimum debt payments
+**שלב 1: יסוד**
+- תקצוב בסיסי
+- תשלום חשבונות חיוניים
+- תשלומי חוב מינימליים
 
-**Level 2: Security**
-- Emergency fund (3-6 months)
-- Adequate insurance
-- Paying off high-interest debt
+**שלב 2: ביטחון**
+- קרן חירום (3 עד 6 חודשים)
+- כיסוי ביטוחי מתאים
+- סילוק חובות בריבית גבוהה
 
-**Level 3: Growth**
-- Retirement contributions
-- Investment accounts
-- Additional savings goals
+**שלב 3: צמיחה**
+- הפקדות לפנסיה
+- חשבונות השקעה
+- יעדי חיסכון נוספים
 
-**Level 4: Optimization**
-- Tax optimization
-- Estate planning
-- Charitable giving
+**שלב 4: מיצוב**
+- אופטימיזציית מס
+- תכנון עיזבון
+- תרומות לצדקה
 
-## Progress at Your Own Pace
+## התקדמו בקצב שלכם
 
-Don't rush to higher levels before solidifying your foundation. Each level supports the ones above it.`,
+אל תמהרו לשלבים גבוהים לפני שביססתם את היסוד. כל שלב תומך בשלבים שמעליו.`,
     category: "financial-literacy",
     readTime: 8,
     featured: true,
   },
   {
     id: "financial-terms",
-    title: "Essential Financial Terms Everyone Should Know",
-    excerpt: "A glossary of important financial concepts explained simply.",
-    content: `Financial jargon can be intimidating. Here are the key terms you should understand.
+    title: "מונחים פיננסיים חיוניים שכדאי להכיר",
+    excerpt: "מילון מושגים פיננסיים חשובים בהסבר פשוט.",
+    content: `ז'רגון פיננסי יכול להיות מרתיע. הנה המונחים המרכזיים שכדאי להכיר.
 
-## Investment Terms
+## מונחי השקעה
 
-- **Asset**: Anything of value you own
-- **Liability**: Money you owe
-- **Net Worth**: Assets minus liabilities
-- **Portfolio**: Collection of investments
-- **Diversification**: Spreading risk across investments
+- **נכס**: כל דבר בעל ערך שבבעלותכם
+- **התחייבות**: כסף שאתם חייבים
+- **שווי נקי**: נכסים פחות התחייבויות
+- **תיק השקעות**: אוסף ההשקעות שלכם
+- **פיזור**: פיזור סיכון בין השקעות
 
-## Banking Terms
+## מונחי בנקאות
 
-- **APY**: Annual Percentage Yield
-- **Compound Interest**: Interest on interest
-- **Principal**: Original amount invested
+- **תשואה שנתית**: אחוז הרווח השנתי על ההשקעה
+- **ריבית דריבית**: ריבית על ריבית
+- **קרן**: הסכום המקורי שהושקע
 
-## Credit Terms
+## מונחי אשראי
 
-- **Credit Score**: Numerical rating of creditworthiness
-- **Interest Rate**: Cost of borrowing money
-- **Collateral**: Asset used to secure a loan`,
+- **דירוג אשראי**: דירוג מספרי של כושר האשראי
+- **שיעור ריבית**: עלות ההלוואה
+- **בטוחה**: נכס המשמש להבטחת הלוואה`,
     category: "financial-literacy",
     readTime: 6,
   },
   // Market Insights
   {
     id: "market-basics",
-    title: "How the Stock Market Works",
-    excerpt: "Understanding the basics of stock market mechanics.",
-    content: `The stock market can seem complex, but the fundamentals are straightforward.
+    title: "איך שוק המניות עובד",
+    excerpt: "להבין את יסודות המנגנון של שוק המניות.",
+    content: `שוק המניות עלול להיראות מורכב, אך היסודות פשוטים.
 
-## What is the Stock Market?
+## מהו שוק המניות?
 
-A marketplace where shares of publicly traded companies are bought and sold. When you buy a stock, you own a small piece of that company.
+זהו שוק שבו נסחרות מניות של חברות ציבוריות. כאשר אתם קונים מניה, אתם הופכים לבעלים של חלק קטן מאותה חברה.
 
-## How Prices Move
+## איך המחירים נעים
 
-Stock prices are determined by supply and demand. If more people want to buy than sell, prices rise. If more want to sell, prices fall.
+מחירי המניות נקבעים לפי היצע וביקוש. אם יותר אנשים רוצים לקנות מאשר למכור, המחירים עולים. אם יותר רוצים למכור, המחירים יורדים.
 
-## Key Indexes
+## מדדים מרכזיים
 
-- **TA-35**: Top 35 companies on Tel Aviv Stock Exchange
-- **S&P 500**: 500 largest US companies
-- **NASDAQ**: Technology-focused index
+- **ת״א-35**: 35 החברות הגדולות בבורסה לניירות ערך בתל אביב
+- **S&P 500**: 500 החברות הגדולות בארה״ב
+- **נאסד״ק**: מדד הממוקד בחברות טכנולוגיה
 
-## Long-term Perspective
+## פרספקטיבה לטווח ארוך
 
-Daily market movements are mostly noise. Focus on long-term trends and fundamentals rather than short-term volatility.`,
+תנודות יומיות בשוק הן בעיקר רעש. התמקדו במגמות לטווח ארוך וביסודות במקום בתנודתיות קצרות טווח.`,
     category: "market-insights",
     readTime: 5,
   },
 ];
 
 export const categories = [
-  { id: "investing-basics", title: "Investing Basics", description: "Learn the fundamentals of investing" },
-  { id: "emergency-funds", title: "Emergency Funds", description: "Build your financial safety net" },
-  { id: "pension-retirement", title: "Pension & Retirement", description: "Plan for your future" },
-  { id: "budgeting-tips", title: "Budgeting Tips", description: "Master your money management" },
-  { id: "financial-literacy", title: "Financial Literacy", description: "Understand key financial concepts" },
-  { id: "market-insights", title: "Market Insights", description: "Stay informed about markets" },
+  { id: "investing-basics", title: "יסודות השקעה", description: "למדו את עקרונות היסוד של השקעה" },
+  { id: "emergency-funds", title: "קרנות חירום", description: "בנו את רשת הביטחון הפיננסית שלכם" },
+  { id: "pension-retirement", title: "פנסיה ופרישה", description: "תכננו את העתיד שלכם" },
+  { id: "budgeting-tips", title: "טיפים לתקציב", description: "שלטו בניהול הכסף שלכם" },
+  { id: "financial-literacy", title: "אוריינות פיננסית", description: "הבינו מושגים פיננסיים מרכזיים" },
+  { id: "market-insights", title: "תובנות שוק", description: "הישארו מעודכנים לגבי השווקים" },
 ];
 
 export const getArticlesByCategory = (categoryId: string) => 

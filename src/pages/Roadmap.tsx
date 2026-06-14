@@ -12,18 +12,22 @@ import {
   RefreshCw,
   ChevronUp,
   ChevronDown,
+  Sparkles,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppNavbar from "@/components/app/AppNavbar";
 import RoadmapSteps from "@/components/roadmap/RoadmapSteps";
 import DataLoadSection from "@/components/DataLoadSection";
 import GoalList from "@/components/GoalList";
+import Confetti from "@/components/Confetti";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/authStore";
 import { useRoadmapStore } from "@/store/roadmapStore";
 import { getRoadmap } from "@/api/roadmap.api";
 import { getGoals } from "@/api/goals.api";
 import { getProfile } from "@/api/profile.api";
+import { resetAccountData } from "@/api/openfinance.api";
 import { UserGoalStatus } from "@/types";
 import type { RoadmapState, UserGoal } from "@/types";
 
@@ -34,24 +38,68 @@ const STEP_LABELS: Record<
     name: string;
     subtitle: string;
     icon: React.ComponentType<{ className?: string }>;
+    teaser: string;
+    highlights: string[];
   }
 > = {
   1: {
     name: "יציבות פיננסית",
     subtitle: "בנה את הבסיס שלך",
     icon: Shield,
+    teaser:
+      "השלב הראשון במסע — יצירת תזרים מזומנים יציב ושליטה מלאה בהוצאות שלך.",
+    highlights: [
+      "בניית תקציב חודשי ברור",
+      "מעקב אחר הכנסות והוצאות",
+      "כיסוי כל ההתחייבויות הבסיסיות",
+    ],
   },
-  2: { name: "קרן חירום", subtitle: "רשת הביטחון שלך", icon: PiggyBank },
+  2: {
+    name: "קרן חירום",
+    subtitle: "רשת הביטחון שלך",
+    icon: PiggyBank,
+    teaser:
+      "רשת ביטחון כלכלית שתאפשר לך להתמודד עם הפתעות החיים בלי להיכנס לחובות.",
+    highlights: [
+      "חיסכון של 3 עד 6 חודשי הוצאות",
+      "כסף נזיל וזמין בכל רגע",
+      "שקט נפשי מול אירועים בלתי צפויים",
+    ],
+  },
   3: {
     name: "חופש מחובות",
     subtitle: "סלק חובות בריבית גבוהה",
     icon: CreditCard,
+    teaser:
+      "סילוק שיטתי של חובות בריבית גבוהה כדי לשחרר את ההכנסה שלך לצמיחה.",
+    highlights: [
+      "מיפוי כל החובות שלך",
+      "סילוק החובות בריבית הגבוהה ביותר תחילה",
+      "הפיכת תשלומי הריבית לחיסכון",
+    ],
   },
-  4: { name: "השקע וצמח", subtitle: "כנס לשוק", icon: TrendingUp },
+  4: {
+    name: "השקע וצמח",
+    subtitle: "כנס לשוק",
+    icon: TrendingUp,
+    teaser:
+      "הכסף שלך מתחיל לעבוד בשבילך — כניסה מושכלת לשוק ההון לטווח ארוך.",
+    highlights: [
+      "בניית תיק השקעות מפוזר",
+      "ניצול כוח הריבית הדריבית",
+      "השקעה עקבית לאורך זמן",
+    ],
+  },
   5: {
     name: "בניית עושר",
     subtitle: "עצמאות כלכלית",
     icon: Crown,
+    teaser: "השלב המתקדם — בניית עושר משמעותי ועצמאות כלכלית אמיתית.",
+    highlights: [
+      "אופטימיזציית מס וניהול נכסים",
+      "יצירת מקורות הכנסה פסיביים",
+      "תכנון עתיד ועיזבון",
+    ],
   },
 };
 
@@ -97,9 +145,14 @@ const Roadmap = () => {
 
   // Refresh panel state
   const [showRefreshPanel, setShowRefreshPanel] = useState(false);
+  // Reset data state
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState("");
   // Progress animation
   const [animatingGoals, setAnimatingGoals] = useState<Set<string>>(new Set());
   const [animatingStage, setAnimatingStage] = useState(false);
+  // Celebration confetti (fires on level-up; reusable elsewhere)
+  const [showConfetti, setShowConfetti] = useState(false);
   // Snapshot taken before each refresh so we can detect changes afterwards
   const preRefreshSnapshot = useRef<{
     stepId: number;
@@ -173,6 +226,16 @@ const Roadmap = () => {
     }
   }, [roadmapState]);
 
+  // One-off celebration after login (set in Login.tsx) — used to test the
+  // confetti effect. Fires once the roadmap is ready, then clears the flag.
+  useEffect(() => {
+    if (pageStatus !== "ready") return;
+    if (sessionStorage.getItem("nextstep:celebrate") === "1") {
+      sessionStorage.removeItem("nextstep:celebrate");
+      setShowConfetti(true);
+    }
+  }, [pageStatus]);
+
   /** Called when the refresh panel successfully loads new data. */
   const handleRefreshSuccess = () => {
     const store = useRoadmapStore.getState();
@@ -205,6 +268,7 @@ const Roadmap = () => {
       // Detect step advancement
       if (newStepId > snap.stepId) {
         setAnimatingStage(true);
+        setShowConfetti(true);
         setTimeout(() => setAnimatingStage(false), 2500);
       }
 
@@ -231,6 +295,25 @@ const Roadmap = () => {
     setShowRefreshPanel((prev) => !prev);
   };
 
+  /** Wipe all financial data and return to the setup flow. */
+  const handleResetData = async () => {
+    if (resetting) return;
+    const confirmed = window.confirm(
+      "פעולה זו תמחק לצמיתות את כל הנתונים הפיננסיים שלך (מפה, יעדים והיסטוריה). פרטי החשבון שלך יישמרו. להמשיך?",
+    );
+    if (!confirmed) return;
+    setResetting(true);
+    setResetError("");
+    try {
+      await resetAccountData();
+      reset(); // clear local store
+      navigate("/setup", { replace: true });
+    } catch {
+      setResetError("האיפוס נכשל. נסה שוב.");
+      setResetting(false);
+    }
+  };
+
   if (!isAuthenticated) return null;
 
   if (pageStatus === "loading") {
@@ -253,15 +336,35 @@ const Roadmap = () => {
   const completedGoals = goals.filter(
     (g: UserGoal) => g.status === UserGoalStatus.COMPLETED,
   ).length;
+  // Prefer the backend's `progress_percents` value from the roadmap_states
+  // table (resilient to snake_case / plural serialisation). Fall back to a
+  // goal-based estimate only when the state has no progress value.
+  const statePercent =
+    roadmapState?.progressPercent ??
+    roadmapState?.progressPercents ??
+    roadmapState?.progress_percents ??
+    roadmapState?.progress_percent;
   const progressPercent =
-    goals.length > 0
-      ? Math.round((completedGoals / goals.length) * 100)
-      : (roadmapState?.progressPercent ?? 0);
+    statePercent != null
+      ? Math.max(0, Math.min(100, statePercent))
+      : goals.length > 0
+        ? Math.round((completedGoals / goals.length) * 100)
+        : 0;
   const financialStages = buildStages(currentStepId, progressPercent);
   const currentStage = financialStages[currentIndex];
 
+  // The stage the user is currently *viewing* on the map (may differ from
+  // their actual current stage).
+  const selectedStepId = currentIndex + 1;
+  const selectedMeta = STEP_LABELS[selectedStepId];
+  const StageIcon = selectedMeta?.icon ?? Shield;
+  const isCurrentStage = currentStage.status === "active";
+  const isCompletedStage = currentStage.status === "completed";
+  const isLockedStage = currentStage.status === "locked";
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <Confetti fire={showConfetti} onComplete={() => setShowConfetti(false)} />
       <AppNavbar />
 
       {/* Fallback upload state (e.g. if API fails at load time) */}
@@ -301,8 +404,8 @@ const Roadmap = () => {
             dir="rtl"
           >
             <div className="max-w-sm mx-auto space-y-5">
-              {/* Stage description */}
-              {roadmapState?.stateDescription && (
+              {/* Stage description — only for the user's current stage */}
+              {isCurrentStage && roadmapState?.stateDescription && (
                 <div className="glass-card p-4">
                   <p className="text-sm text-muted-foreground">
                     {roadmapState.stateDescription}
@@ -326,29 +429,87 @@ const Roadmap = () => {
                 </p>
               </div>
 
-              {/* Goals from backend */}
-              {goals.length > 0 && (
-                <GoalList animatingGoalIds={animatingGoals} />
+              {/* Current stage — active goals to work on */}
+              {isCurrentStage && (
+                <GoalList
+                  stepId={selectedStepId}
+                  currentStepId={currentStepId}
+                  mode="current"
+                  animatingGoalIds={animatingGoals}
+                />
               )}
 
-              {/* Empty state for locked stage */}
-              {currentStage.status === "locked" && (
-                <div className="text-center p-6 rounded-2xl bg-muted/50 border border-border">
-                  <Lock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="font-medium text-muted-foreground">שלב נעול</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    השלם שלבים קודמים כדי לפתוח את זה.
+              {/* Completed stage — shown at 100% with the past tasks */}
+              {isCompletedStage && (
+                <>
+                  <div
+                    className="rounded-2xl border border-primary/20 bg-primary/5 p-4"
+                    dir="rtl"
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-5 w-5 text-primary" />
+                        <p className="font-medium text-primary">שלב הושלם</p>
+                      </div>
+                      <span className="text-sm font-semibold text-primary">
+                        100%
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-primary/10">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                  </div>
+
+                  <GoalList
+                    stepId={selectedStepId}
+                    currentStepId={currentStepId}
+                    mode="past"
+                    title="המשימות שהשלמת"
+                  />
+                </>
+              )}
+
+              {/* Future / locked stage — enticing preview, no tasks */}
+              {isLockedStage && selectedMeta && (
+                <div
+                  className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-muted/40 to-background p-6 text-center"
+                  dir="rtl"
+                >
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5">
+                    <StageIcon className="h-7 w-7 text-primary" />
+                  </div>
+
+                  <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                    <Lock className="h-3 w-3" />
+                    שלב נעול
+                  </div>
+
+                  <h3 className="font-display text-lg font-bold">
+                    {selectedMeta.name}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {selectedMeta.teaser}
                   </p>
-                </div>
-              )}
 
-              {/* Completed stage badge */}
-              {currentStage.status === "completed" && (
-                <div className="text-center p-4 rounded-2xl bg-primary/5 border border-primary/20">
-                  <Check className="w-8 h-8 text-primary mx-auto mb-2" />
-                  <p className="font-medium text-primary">שלב הושלם!</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    כל הכבוד — השלב הבא מחכה לך.
+                  <div className="mt-5 space-y-2.5 text-right">
+                    {selectedMeta.highlights.map((highlight, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2.5 rounded-xl border border-border bg-background/60 px-3 py-2"
+                      >
+                        <Sparkles className="h-4 w-4 shrink-0 text-primary" />
+                        <span className="text-sm text-foreground">
+                          {highlight}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <p className="mt-5 text-xs text-muted-foreground">
+                    השלם את השלבים הקודמים כדי לפתוח את השלב הזה ולהתחיל לצמוח 🚀
                   </p>
                 </div>
               )}
@@ -376,6 +537,45 @@ const Roadmap = () => {
                       ההתקדמות הקיימת שלך.
                     </p>
                     <DataLoadSection onSuccess={handleRefreshSuccess} />
+
+                    {/* Test confetti */}
+                    <div className="pt-3 border-t border-border">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowConfetti(true)}
+                        className="w-full flex items-center gap-2 text-xs"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        בדיקת קונפטי
+                      </Button>
+                    </div>
+
+                    {/* Reset all data */}
+                    <div className="pt-3 border-t border-border space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        רוצה להתחיל מחדש? פעולה זו תמחק לצמיתות את כל הנתונים
+                        הפיננסיים שלך (מפה, יעדים והיסטוריה).
+                      </p>
+                      {resetError && (
+                        <p className="text-xs text-destructive">{resetError}</p>
+                      )}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleResetData}
+                        disabled={resetting}
+                        className="w-full flex items-center gap-2 text-xs"
+                      >
+                        {resetting ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <RotateCcw className="w-3.5 h-3.5" />
+                        )}
+                        אפס נתונים
+                      </Button>
+                    </div>
+
                     <Button
                       variant="ghost"
                       size="sm"

@@ -33,6 +33,9 @@ const Auth = () => {
       if (result.error) {
         setError(result.error);
       } else {
+        // Flag a one-off celebration so the roadmap fires confetti once the
+        // user lands there after logging in. (Consumed in Roadmap.tsx.)
+        sessionStorage.setItem("nextstep:celebrate", "1");
         navigate(result.redirectTo ?? "/roadmap");
       }
     } finally {

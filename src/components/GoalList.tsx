@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { Target, CheckCircle2, Circle, Loader2, Check } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  Target,
+  CheckCircle2,
+  Loader2,
+  Check,
+  BookOpen,
+  ExternalLink,
+} from "lucide-react";
 import { useRoadmapStore } from "../store/roadmapStore";
 import { updateGoal } from "../api/goals.api";
 import type { UserGoal } from "../types";
@@ -16,6 +24,38 @@ function renderDescription(
     if (typeof val === "number") return val.toLocaleString("he-IL");
     return String(val);
   });
+}
+
+/**
+ * Resolves a `bank_info_link` value into something the goal card can render.
+ * Absolute URLs that point at this app are converted to internal SPA routes
+ * (so React Router handles them without a full page reload); anything else
+ * is treated as an external link opened in a new tab.
+ */
+function resolveInfoLink(
+  raw: unknown,
+): { href: string; isInternal: boolean } | null {
+  if (typeof raw !== "string" || raw.trim() === "") return null;
+  const value = raw.trim();
+
+  // Already a relative path (e.g. "/article/compound-interest")
+  if (value.startsWith("/")) {
+    return { href: value, isInternal: true };
+  }
+
+  try {
+    const url = new URL(value);
+    const isSameOrigin = url.origin === window.location.origin;
+    // Treat known in-app routes as internal even across ports/hosts, since the
+    // links are authored against a dev origin (e.g. localhost:5173).
+    const isAppRoute = /^\/(article|category|data-center)\b/.test(url.pathname);
+    if (isSameOrigin || isAppRoute) {
+      return { href: url.pathname + url.search + url.hash, isInternal: true };
+    }
+    return { href: value, isInternal: false };
+  } catch {
+    return null;
+  }
 }
 
 function GoalItem({
@@ -46,6 +86,9 @@ function GoalItem({
         goal.dynamicParams ?? {},
       )
     : null;
+
+  // Optional link to an explanatory article (mostly from the data center).
+  const infoLink = resolveInfoLink(goal.dynamicParams?.bank_info_link);
 
   const handleMarkComplete = async () => {
     if (isCompleted || completing) return;
@@ -78,12 +121,10 @@ function GoalItem({
       <div className="flex items-start justify-between gap-3">
         {/* Icon + name */}
         <div className="flex items-start gap-2.5">
-          {isCompleted ? (
+          {isCompleted && (
             <div className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-primary flex items-center justify-center">
               <Check className="h-3 w-3 text-primary-foreground" />
             </div>
-          ) : (
-            <Circle className="mt-0.5 h-5 w-5 shrink-0 text-gray-300 dark:text-gray-600" />
           )}
           <div>
             <p
@@ -108,6 +149,29 @@ function GoalItem({
               <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-500 leading-relaxed">
                 {goal.aiInsight}
               </p>
+            )}
+
+            {/* Link to an explanatory article */}
+            {infoLink && !isCompleted && (
+              infoLink.isInternal ? (
+                <Link
+                  to={infoLink.href}
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  למדו עוד על המשימה הזו
+                </Link>
+              ) : (
+                <a
+                  href={infoLink.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  למדו עוד על המשימה הזו
+                </a>
+              )
             )}
 
             {/* Monetary progress (only when there's a numeric target) */}
@@ -173,9 +237,17 @@ interface GoalListProps {
 }
 
 export default function GoalList({ animatingGoalIds }: GoalListProps = {}) {
-  const goals = useRoadmapStore((s) => s.goals);
+  const allGoals = useRoadmapStore((s) => s.goals);
 
-  if (!goals || goals.length === 0) return null;
+  // Only show goals the user is currently working on (active) or has
+  // finished (completed). Hide removed/abandoned/expired goals.
+  const goals = (allGoals ?? []).filter(
+    (g) =>
+      g.status === UserGoalStatus.ACTIVE ||
+      g.status === UserGoalStatus.COMPLETED,
+  );
+
+  if (goals.length === 0) return null;
 
   const completed = goals.filter(
     (g) => g.status === UserGoalStatus.COMPLETED,

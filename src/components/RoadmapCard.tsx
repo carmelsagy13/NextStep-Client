@@ -16,7 +16,14 @@ export default function RoadmapCard() {
 
   const { currentStepId, progressPercent } = roadmapState;
   const stepTitle = STEP_LABELS[currentStepId] ?? `Step ${currentStepId}`;
-  const progress = Math.max(0, Math.min(100, progressPercent));
+  // Resilient to the backend's `progress_percents` column serialisation.
+  const rawPercent =
+    progressPercent ??
+    roadmapState.progressPercents ??
+    roadmapState.progress_percents ??
+    roadmapState.progress_percent ??
+    0;
+  const progress = Math.max(0, Math.min(100, rawPercent));
 
   return (
     <div className="w-full max-w-lg mx-auto rounded-sm border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
