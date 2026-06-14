@@ -1,5 +1,6 @@
 import { MapPin, ChevronRight } from 'lucide-react';
 import { useRoadmapStore } from '../store/roadmapStore';
+import { useCurrentStep } from '../store/currentStep';
 
 const STEP_LABELS: Record<number, string> = {
   1: 'Basic Needs & Cash Flow',
@@ -11,10 +12,12 @@ const STEP_LABELS: Record<number, string> = {
 
 export default function RoadmapCard() {
   const roadmapState = useRoadmapStore((s) => s.roadmapState);
+  // Authoritative current step from the profile (not the roadmap state).
+  const currentStepId = useCurrentStep();
 
   if (!roadmapState) return null;
 
-  const { currentStepId, progressPercent } = roadmapState;
+  const { progressPercent } = roadmapState;
   const stepTitle = STEP_LABELS[currentStepId] ?? `Step ${currentStepId}`;
   // Resilient to the backend's `progress_percents` column serialisation.
   const rawPercent =

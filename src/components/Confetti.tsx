@@ -93,7 +93,7 @@ export default function Confetti({
       x: Math.random() * width,
       y: Math.random() * -height,
       vx: (Math.random() - 0.5) * 1.2,
-      vy: Math.random() * 1.1 + 0.7,
+      vy: Math.random() * 1.5 + 2.5,
       size: Math.random() * 7 + 5,
       rotation: Math.random() * Math.PI * 2,
       rotationSpeed: (Math.random() - 0.5) * 0.08,
@@ -107,8 +107,8 @@ export default function Confetti({
 
     const start = performance.now();
     let last = start;
-    const gravity = 0.018;
-    const terminalVy = 2.4;
+    const gravity = 0.03;
+    const terminalVy = 4;
 
     const render = (now: number) => {
       const elapsed = now - start;

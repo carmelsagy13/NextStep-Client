@@ -80,7 +80,6 @@ export interface RoadmapStep {
 export interface RoadmapState {
   stateId: string;
   userId: string;
-  currentStepId: number;
   progressPercent: number;
   stateDescription: string;
   // Resilient aliases for the backend `progress_percents` column, which may
@@ -93,6 +92,24 @@ export interface RoadmapState {
 export interface RoadmapResponse {
   state: RoadmapState | null;
   steps: RoadmapStep[];
+  /**
+   * Resolved current-step object derived from the authoritative profile step.
+   * Visualization only — never use this to drive business logic; read the
+   * user's step from GET /profile → `currentStep` instead.
+   */
+  currentStep?: RoadmapStep;
+}
+
+/**
+ * Authoritative user profile (GET /profile). `currentStep` is the single
+ * source of truth for the user's financial step across the app.
+ */
+export interface Profile {
+  currentStep: number;
+  riskTolerance?: string;
+  knowledgeLevel?: string;
+  occupation?: string;
+  [key: string]: unknown;
 }
 
 // Upload analysis — response from POST /openfinance/upload

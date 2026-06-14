@@ -9,7 +9,7 @@ import RoadmapCard from '../components/RoadmapCard';
 import GoalList from '../components/GoalList';
 import { getRoadmap } from '../api/roadmap.api';
 import { getGoals } from '../api/goals.api';
-import { getProfile } from '../api/profile.api';
+import { refreshCurrentStep } from '../store/currentStep';
 import { resetAccountData } from '../api/openfinance.api';
 import type { RoadmapState, UserGoal } from '../types';
 
@@ -38,7 +38,8 @@ export default function Analyze() {
       try {
         // Check profile first — a 404 means the profile was deleted.
         // Clear all stale local state and show the onboarding upload form.
-        await getProfile();
+        // Storing it also keeps the authoritative current step in sync.
+        await refreshCurrentStep();
       } catch (err) {
         const status = (err as { response?: { status?: number } }).response?.status;
         if (status === 404) {
@@ -212,7 +213,12 @@ export default function Analyze() {
               >
                 Option A · Upload Statement
               </p>
-              <FinancialReportUpload onSuccess={() => setShowUpload(false)} />
+              <FinancialReportUpload
+                onSuccess={async () => {
+                  await refreshCurrentStep();
+                  setShowUpload(false);
+                }}
+              />
             </section>
 
             {/* ── Divider ── */}
@@ -235,7 +241,12 @@ export default function Analyze() {
               >
                 Option B · Direct Bank Sync
               </p>
-              <BankSyncConnect onSuccess={() => setShowUpload(false)} />
+              <BankSyncConnect
+                onSuccess={async () => {
+                  await refreshCurrentStep();
+                  setShowUpload(false);
+                }}
+              />
             </section>
           </div>
         )}

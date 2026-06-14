@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import AppNavbar from "@/components/app/AppNavbar";
 import { useAuth } from "@/hooks/useAuth";
 import { getProfile, getProfileHistory } from "@/api/profile.api";
-import type { UserProfileHistory } from "@/types";
+import type { Profile as UserProfileData, UserProfileHistory } from "@/types";
 import {
   Mail,
   TrendingUp,
@@ -16,17 +16,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface BackendProfile {
-  currentStep?: number;
-  riskTolerance?: string;
-  knowledgeLevel?: string;
-  occupation?: string;
-}
-
 const Profile = () => {
   const navigate = useNavigate();
   const { userProfile: user, displayId, email, isAuthenticated } = useAuth();
-  const [profile, setProfile] = useState<BackendProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [history, setHistory] = useState<UserProfileHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

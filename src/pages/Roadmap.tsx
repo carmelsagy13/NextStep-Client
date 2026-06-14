@@ -26,7 +26,11 @@ import { useAuthStore } from "@/store/authStore";
 import { useRoadmapStore } from "@/store/roadmapStore";
 import { getRoadmap } from "@/api/roadmap.api";
 import { getGoals } from "@/api/goals.api";
-import { getProfile } from "@/api/profile.api";
+import {
+  useCurrentStep,
+  getCurrentStep,
+  refreshCurrentStep,
+} from "@/store/currentStep";
 import { resetAccountData } from "@/api/openfinance.api";
 import { UserGoalStatus } from "@/types";
 import type { RoadmapState, UserGoal } from "@/types";
@@ -138,6 +142,8 @@ const Roadmap = () => {
   const { isAuthenticated } = useAuth();
   const { accessToken } = useAuthStore();
   const { hydrate, reset, roadmapState, goals } = useRoadmapStore();
+  // Authoritative current step — read from GET /profile, never the roadmap state.
+  const currentStepId = useCurrentStep();
 
   const [pageStatus, setPageStatus] = useState<"loading" | "ready">("loading");
   const [showUpload, setShowUpload] = useState(false);
@@ -173,7 +179,8 @@ const Roadmap = () => {
 
     async function loadData() {
       try {
-        await getProfile();
+        // Fetch + store the authoritative profile (source of the current step).
+        await refreshCurrentStep();
       } catch (err) {
         const status = (err as { response?: { status?: number } }).response
           ?.status;
@@ -202,10 +209,8 @@ const Roadmap = () => {
           return;
         }
 
-        if (loadedState) {
-          const idx = (loadedState.currentStepId ?? 1) - 1;
-          setCurrentIndex(Math.max(0, Math.min(4, idx)));
-        }
+        const idx = getCurrentStep() - 1;
+        setCurrentIndex(Math.max(0, Math.min(4, idx)));
 
         setShowUpload(false);
       } catch {
@@ -218,13 +223,11 @@ const Roadmap = () => {
     loadData();
   }, [accessToken, hydrate, reset, navigate]);
 
-  // Sync stage index whenever roadmapState changes (after refresh)
+  // Sync stage index whenever the authoritative step changes (after refresh)
   useEffect(() => {
-    if (roadmapState?.currentStepId) {
-      const idx = roadmapState.currentStepId - 1;
-      setCurrentIndex(Math.max(0, Math.min(4, idx)));
-    }
-  }, [roadmapState]);
+    const idx = currentStepId - 1;
+    setCurrentIndex(Math.max(0, Math.min(4, idx)));
+  }, [currentStepId]);
 
   // One-off celebration after login (set in Login.tsx) — used to test the
   // confetti effect. Fires once the roadmap is ready, then clears the flag.
@@ -237,20 +240,15 @@ const Roadmap = () => {
   }, [pageStatus]);
 
   /** Called when the refresh panel successfully loads new data. */
-  const handleRefreshSuccess = () => {
+  const handleRefreshSuccess = async () => {
+    // Re-analysis may advance the user's step — refetch the authoritative
+    // profile step before comparing against the pre-refresh snapshot.
+    const newStepId = await refreshCurrentStep();
     const store = useRoadmapStore.getState();
-    const newState = store.roadmapState;
     const newGoals = store.goals;
 
     const snap = preRefreshSnapshot.current;
-    if (snap && newState) {
-      const newStepId = newState.currentStepId ?? 1;
-      const newCompleted = new Set(
-        newGoals
-          .filter((g) => g.status === UserGoalStatus.COMPLETED)
-          .map((g) => g.goalId),
-      );
-
+    if (snap) {
       // Detect newly completed goals
       const newlyCompleted = newGoals
         .filter(
@@ -271,8 +269,6 @@ const Roadmap = () => {
         setShowConfetti(true);
         setTimeout(() => setAnimatingStage(false), 2500);
       }
-
-      void newCompleted; // suppress unused warning
     }
 
     setShowRefreshPanel(false);
@@ -284,7 +280,7 @@ const Roadmap = () => {
     const state = store.roadmapState;
     const goals = store.goals;
     preRefreshSnapshot.current = {
-      stepId: state?.currentStepId ?? 1,
+      stepId: getCurrentStep(),
       progressPercent: state?.progressPercent ?? 0,
       completedGoalIds: new Set(
         goals
@@ -331,8 +327,8 @@ const Roadmap = () => {
 
   const hasData = !!roadmapState || goals.length > 0;
 
-  // Build stages for the visual component
-  const currentStepId = roadmapState?.currentStepId ?? 1;
+  // Build stages for the visual component. The current step is the
+  // authoritative profile value resolved via useCurrentStep() above.
   const completedGoals = goals.filter(
     (g: UserGoal) => g.status === UserGoalStatus.COMPLETED,
   ).length;
@@ -374,11 +370,9 @@ const Roadmap = () => {
             <DataLoadSection
               title="הגדרת המפה שלך"
               subtitle="חבר את הבנק שלך או העלה דוח Open Finance כדי ליצור את התוכנית האישית שלך."
-              onSuccess={() => {
-                const updatedState = useRoadmapStore.getState().roadmapState;
-                if (updatedState?.currentStepId) {
-                  setCurrentIndex(updatedState.currentStepId - 1);
-                }
+              onSuccess={async () => {
+                const step = await refreshCurrentStep();
+                setCurrentIndex(Math.max(0, Math.min(4, step - 1)));
                 setShowUpload(false);
               }}
             />
