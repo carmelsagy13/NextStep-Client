@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { submitQuestionnaire } from '../api/questionnaire.api';
+import { submitQuestionnaireResponses } from '../api/questionnaire.api';
 
 const SAMPLE_ANSWERS = {
   age: 24,
@@ -20,7 +20,11 @@ export default function QuestionnaireTest() {
     setResponse('Loading...');
     try {
       const answers = JSON.parse(json);
-      const res = await submitQuestionnaire(answers);
+      const flat = Object.entries(answers).map(([questionKey, value]) => ({
+        questionKey,
+        value,
+      }));
+      const res = await submitQuestionnaireResponses(flat);
       setResponse(JSON.stringify(res.data, null, 2));
     } catch (err: unknown) {
       const error = err as { response?: { data?: unknown }; message?: string };

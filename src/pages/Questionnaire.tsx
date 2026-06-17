@@ -1,34 +1,39 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { QuestionnaireProgress } from "@/components/questionnaire/QuestionnaireProgress";
-import { FinancialSituationStep } from "@/components/questionnaire/FinancialSituationStep";
-import { FinancialGoalsStep } from "@/components/questionnaire/FinancialGoalsStep";
-import { KnowledgeLevelStep } from "@/components/questionnaire/KnowledgeLevelStep";
-import { useAuth } from "@/hooks/useAuth";
-import { submitQuestionnaire } from "@/api/questionnaire.api";
-import type {
-  FinancialSituation,
-  FinancialGoals,
-  KnowledgeLevel,
-} from "@/types/userProfile";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, Sparkles, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
+// Note: in RTL, "back" reads to the right and "forward" reads to the left.
 
-type Step = 1 | 2 | 3 | 4;
+import { useAuth } from "@/hooks/useAuth";
+import {
+  getQuestionnaire,
+  submitQuestionnaireResponses,
+} from "@/api/questionnaire.api";
+import { useQuestionnaireEngine } from "@/hooks/useQuestionnaireEngine";
+import { DynamicScreen } from "@/components/questionnaire/DynamicScreen";
+import { byOrderIndex, DEFAULT_LANG } from "@/lib/questionnaireEngine";
+import type {
+  FieldValidationError,
+  QuestionnaireValidationResponse,
+} from "@/types/questionnaire";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+
+const LANG = DEFAULT_LANG;
+
+/** Extract field-level validation errors from an Axios error response. */
+function extractFieldErrors(error: unknown): FieldValidationError[] {
+  const data = (
+    error as {
+      response?: { data?: Partial<QuestionnaireValidationResponse> };
+    }
+  ).response?.data;
+  return Array.isArray(data?.errors) ? data!.errors! : [];
+}
 
 const Questionnaire = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const [currentStep, setCurrentStep] = useState<Step>(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
-
-  const [financialSituation, setFinancialSituation] =
-    useState<FinancialSituation | null>(null);
-  const [financialGoals, setFinancialGoals] = useState<FinancialGoals | null>(
-    null,
-  );
 
   // Auth guard
   useEffect(() => {
@@ -37,87 +42,78 @@ const Questionnaire = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleFinancialSituationComplete = (data: FinancialSituation) => {
-    setFinancialSituation(data);
-    setCurrentStep(2);
-  };
+  const {
+    data: questionnaire,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["questionnaire"],
+    queryFn: getQuestionnaire,
+    enabled: isAuthenticated,
+  });
 
-  const handleGoalsComplete = (data: FinancialGoals) => {
-    setFinancialGoals(data);
-    setCurrentStep(3);
-  };
+  // Ordered screens drive the entire flow — nothing is hardcoded.
+  const screens = useMemo(
+    () => [...(questionnaire?.screens ?? [])].sort(byOrderIndex),
+    [questionnaire],
+  );
 
-  const handleKnowledgeComplete = async (data: KnowledgeLevel) => {
-    setIsSubmitting(true);
-    setSubmitError("");
+  const engine = useQuestionnaireEngine(screens);
 
-    try {
-      await submitQuestionnaire({
-        financialSituation,
-        financialGoals,
-        knowledgeLevel: data,
-      });
-      setCurrentStep(4);
-    } catch (err) {
-      const msg = (
-        err as { response?: { data?: { message?: string | string[] } } }
-      ).response?.data?.message;
-      const errorText = Array.isArray(msg) ? msg[0] : msg;
-      setSubmitError(errorText || "Failed to submit. Please try again.");
-      setIsSubmitting(false);
-    }
-  };
-
-  const goBack = () => {
-    setCurrentStep((prev) => (prev > 1 ? ((prev - 1) as Step) : prev));
-  };
+  const [screenIndex, setScreenIndex] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   if (!isAuthenticated) return null;
 
-  // Completion screen
-  if (currentStep === 4) {
+  // Loading the questionnaire structure
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Failed to load structure
+  if (isError || screens.length === 0) {
+    return (
+      <div
+        className="min-h-screen bg-background flex items-center justify-center p-4"
+        dir="rtl"
+      >
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">
+            לא הצלחנו לטעון את השאלון. נסו שוב.
+          </p>
+          <Button onClick={() => refetch()}>נסה שוב</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Completion screen
+  if (isComplete) {
+    return (
+      <div
+        className="min-h-screen bg-background flex items-center justify-center p-4"
+        dir="rtl"
+      >
         <div className="max-w-md w-full text-center space-y-8">
           <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
             <CheckCircle className="w-10 h-10 text-primary" />
           </div>
-
           <div className="space-y-2">
-            <h1 className="font-display text-3xl font-bold">
-              You're All Set! 🎉
-            </h1>
+            <h1 className="font-display text-3xl font-bold">הכל מוכן! 🎉</h1>
             <p className="text-muted-foreground">
-              We've created a personalized financial roadmap just for you.
+              בנינו עבורכם מסלול פיננסי מותאם אישית.
             </p>
           </div>
-
-          <div className="glass-card p-6 space-y-4 text-left">
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <span className="font-medium">
-                Your personalized plan includes:
-              </span>
-            </div>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Step-by-step action items based on your situation
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Educational content matched to your knowledge level
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Goal tracking aligned with your timeline
-              </li>
-            </ul>
-          </div>
-
           <Link to="/roadmap">
             <Button size="lg" className="w-full h-12 text-base">
-              View My Roadmap
+              למסלול שלי
             </Button>
           </Link>
         </div>
@@ -125,25 +121,73 @@ const Questionnaire = () => {
     );
   }
 
+  const currentScreen = screens[screenIndex];
+  const isLastScreen = screenIndex === screens.length - 1;
+  // Progress reflects screens the user has actually completed, not the
+  // current (still-unfilled) screen. Reaches 100% only after final submit.
+  const progress = isComplete
+    ? 100
+    : (screenIndex / screens.length) * 100;
+
+  const goBack = () => {
+    setSubmitError("");
+    setScreenIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleNext = async () => {
+    setSubmitError("");
+
+    // Validate visible fields on the current screen.
+    if (!engine.validateScreen(currentScreen)) return;
+
+    if (!isLastScreen) {
+      setScreenIndex((prev) => prev + 1);
+      return;
+    }
+
+    // Final submission — compile only the visible (sanitized) answers.
+    setIsSubmitting(true);
+    try {
+      await submitQuestionnaireResponses(engine.compile());
+      setIsComplete(true);
+    } catch (error) {
+      const fieldErrors = extractFieldErrors(error);
+      if (fieldErrors.length > 0) {
+        engine.setServerErrors(fieldErrors);
+        // Jump back to the first screen that owns a failing field.
+        const failingIndex = screens.findIndex((screen) =>
+          fieldErrors.some((fieldError) =>
+            JSON.stringify(screen).includes(`"${fieldError.questionKey}"`),
+          ),
+        );
+        if (failingIndex >= 0) setScreenIndex(failingIndex);
+        setSubmitError("יש לתקן את השדות המסומנים ולשלוח שוב.");
+      } else {
+        setSubmitError("השליחה נכשלה. נסו שוב.");
+      }
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" dir="rtl">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">
-                  N
-                </span>
-              </div>
+            <Link to="/profile" className="flex items-center gap-2">
+              <img
+                src="/IconNoText.png"
+                alt="NextStep"
+                className="w-8 h-8"
+              />
               <span className="font-display text-xl font-bold">NextStep</span>
             </Link>
 
-            <Link to="/">
+            <Link to="/profile">
               <Button variant="ghost" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Exit
+                <ArrowRight className="w-4 h-4" />
+                יציאה
               </Button>
             </Link>
           </div>
@@ -153,7 +197,16 @@ const Questionnaire = () => {
       {/* Main content */}
       <main className="pt-24 pb-12 px-4">
         <div className="max-w-lg mx-auto">
-          <QuestionnaireProgress currentStep={currentStep} totalSteps={3} />
+          {/* Progress */}
+          <div className="mb-8 space-y-2">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>
+                שלב {screenIndex + 1} מתוך {screens.length}
+              </span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <Progress value={progress} />
+          </div>
 
           {submitError && (
             <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
@@ -161,35 +214,44 @@ const Questionnaire = () => {
             </div>
           )}
 
-          {currentStep === 1 && (
-            <FinancialSituationStep
-              initialData={financialSituation || undefined}
-              onNext={handleFinancialSituationComplete}
-            />
-          )}
+          <div className="relative">
+            {isSubmitting && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 rounded-xl">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            )}
 
-          {currentStep === 2 && (
-            <FinancialGoalsStep
-              initialData={financialGoals || undefined}
-              onNext={handleGoalsComplete}
-              onBack={goBack}
+            <DynamicScreen
+              key={currentScreen.screenKey}
+              screen={currentScreen}
+              engine={engine}
+              lang={LANG}
             />
-          )}
+          </div>
 
-          {currentStep === 3 && (
-            <div className="relative">
-              {isSubmitting && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 rounded-xl">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                </div>
-              )}
-              <KnowledgeLevelStep
-                initialData={undefined}
-                onComplete={handleKnowledgeComplete}
-                onBack={goBack}
-              />
-            </div>
-          )}
+          {/* Navigation */}
+          <div className="mt-8 flex items-center gap-3">
+            {screenIndex > 0 && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="flex-1 h-12"
+                onClick={goBack}
+                disabled={isSubmitting}
+              >
+                חזרה
+              </Button>
+            )}
+            <Button
+              size="lg"
+              className="flex-1 h-12 text-base"
+              onClick={handleNext}
+              disabled={isSubmitting}
+            >
+              {isLastScreen ? "סיום" : "המשך"}
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </main>
     </div>
