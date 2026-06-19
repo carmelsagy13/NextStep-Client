@@ -33,7 +33,7 @@ import {
 } from "@/store/currentStep";
 import { resetAccountData } from "@/api/openfinance.api";
 import { UserGoalStatus } from "@/types";
-import type { RoadmapState, UserGoal } from "@/types";
+import type { RoadmapState, RoadmapStep, UserGoal } from "@/types";
 
 // Step labels matching the backend's 5-stage hierarchy
 const STEP_LABELS: Record<
@@ -108,18 +108,26 @@ const STEP_LABELS: Record<
 };
 
 /** Build the `financialStages` array that RoadmapSteps expects from live API data. */
-function buildStages(currentStepId: number, progressPercent: number) {
+function buildStages(
+  currentStepId: number,
+  progressPercent: number,
+  apiSteps?: RoadmapStep[],
+) {
   return [1, 2, 3, 4, 5].map((stepId) => {
     const meta = STEP_LABELS[stepId] ?? {
       name: `שלב ${stepId}`,
       subtitle: "",
       icon: Shield,
     };
+    // Find matching API step to get titleHe if available
+    const apiStep = apiSteps?.find((s) => s.stepId === stepId);
+    const name = apiStep?.titleHe ?? meta.name;
+
     const isCompleted = stepId < currentStepId;
     const isActive = stepId === currentStepId;
     return {
       id: stepId,
-      name: meta.name,
+      name,
       subtitle: meta.subtitle,
       icon: meta.icon,
       color: isActive
@@ -148,6 +156,7 @@ const Roadmap = () => {
   const [pageStatus, setPageStatus] = useState<"loading" | "ready">("loading");
   const [showUpload, setShowUpload] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [apiSteps, setApiSteps] = useState<RoadmapStep[] | undefined>();
 
   // Refresh panel state
   const [showRefreshPanel, setShowRefreshPanel] = useState(false);
@@ -198,9 +207,13 @@ const Roadmap = () => {
           getGoals(),
         ]);
         const loadedState: RoadmapState | null = roadmapRes.data?.state ?? null;
+        const loadedSteps: RoadmapStep[] = Array.isArray(roadmapRes.data?.steps)
+          ? roadmapRes.data.steps
+          : [];
         const loadedGoals: UserGoal[] = Array.isArray(goalsRes.data)
           ? goalsRes.data
           : [];
+        setApiSteps(loadedSteps);
         hydrate(loadedState, loadedGoals);
 
         const hasData = !!loadedState || loadedGoals.length > 0;
@@ -346,7 +359,7 @@ const Roadmap = () => {
       : goals.length > 0
         ? Math.round((completedGoals / goals.length) * 100)
         : 0;
-  const financialStages = buildStages(currentStepId, progressPercent);
+  const financialStages = buildStages(currentStepId, progressPercent, apiSteps);
   const currentStage = financialStages[currentIndex];
 
   // The stage the user is currently *viewing* on the map (may differ from

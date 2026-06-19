@@ -73,8 +73,17 @@ export interface RoadmapGoal {
 export interface RoadmapStep {
   stepId: number;
   title: string;
+  titleHe: string | null;
   description: string;
-  criteria: Record<string, unknown>;
+  // 8 separate criteria columns (replacing the old single `criteria` object)
+  criteriaEmergencyFund: number | null;
+  criteriaDebtFree: number | null;
+  criteriaInvestmentRate: number | null;
+  criteriaPensionOptimized: number | null;
+  criteriaRealEstateOwnership: number | null;
+  criteriaPassiveIncome: number | null;
+  criteriaNetWorth: number | null;
+  criteriaFinancialIndependence: number | null;
 }
 
 export interface RoadmapState {
