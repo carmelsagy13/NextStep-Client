@@ -4,6 +4,7 @@ import AppNavbar from "@/components/app/AppNavbar";
 import { useAuth } from "@/hooks/useAuth";
 import { getProfile, getProfileHistory } from "@/api/profile.api";
 import type { Profile as UserProfileData, UserProfileHistory } from "@/types";
+import ProfileGoals from "@/components/ProfileGoals";
 import {
   Mail,
   TrendingUp,
@@ -180,6 +181,9 @@ const Profile = () => {
 
               {/* Profile details */}
               <div className="space-y-4">
+                {/* Goals */}
+                <ProfileGoals />
+
                 {/* Knowledge & Risk */}
                 {(profile?.riskTolerance || profile?.knowledgeLevel) && (
                   <div className="glass-card p-5">

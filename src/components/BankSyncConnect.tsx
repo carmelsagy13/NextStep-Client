@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { connectBankApi } from "../api/openfinance.api";
 import { useRoadmapStore } from "../store/roadmapStore";
+import FinancialTip from "./FinancialTip";
 
 type Status = "idle" | "loading" | "consent" | "success" | "error";
 
@@ -231,6 +232,9 @@ export default function BankSyncConnect({ onSuccess }: Props) {
           <p className="text-[11px] text-gray-500 dark:text-gray-400">
             התהליך עשוי להימשך עד דקה. נא לא לסגור את החלון.
           </p>
+
+          {/* Keep the user engaged with a financial tip during the wait. */}
+          <FinancialTip />
         </div>
       )}
 

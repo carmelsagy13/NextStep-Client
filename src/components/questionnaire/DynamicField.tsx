@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { Lang, Question } from "@/types/questionnaire";
-import { byOrderIndex, localize } from "@/lib/questionnaireEngine";
+import { byOrderIndex, isMoneyQuestion, localize } from "@/lib/questionnaireEngine";
+import { formatThousands, parseThousands } from "@/lib/utils";
 import type { QuestionnaireEngine } from "@/hooks/useQuestionnaireEngine";
 
 interface DynamicFieldProps {
@@ -102,7 +103,33 @@ export function DynamicField({ question, engine, lang }: DynamicFieldProps) {
           />
         );
 
-      case "NUMBER":
+      case "NUMBER": {
+        // Money fields get thousands-separator formatting and a ₪ prefix.
+        if (isMoneyQuestion(question, lang)) {
+          const display =
+            value === undefined || value === null
+              ? ""
+              : formatThousands(value as number | string);
+          return (
+            <div className="relative" dir="ltr">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">
+                ₪
+              </span>
+              <Input
+                type="text"
+                inputMode="numeric"
+                dir="ltr"
+                className="pl-7 text-left"
+                value={display}
+                onChange={(event) => {
+                  const raw = parseThousands(event.target.value);
+                  setAnswer(key, raw === "" ? undefined : Number(raw));
+                }}
+                aria-invalid={!!error}
+              />
+            </div>
+          );
+        }
         return (
           <Input
             type="number"
@@ -119,6 +146,7 @@ export function DynamicField({ question, engine, lang }: DynamicFieldProps) {
             aria-invalid={!!error}
           />
         );
+      }
 
       default:
         return null;

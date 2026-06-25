@@ -5,6 +5,15 @@ import type { AnswerPayloadItem, Questionnaire } from "@/types/questionnaire";
 export const getQuestionnaire = () =>
   apiClient.get<Questionnaire>("/questionnaire").then((res) => res.data);
 
+/**
+ * Fetch the user's previously saved answers as a flat list of key-value pairs.
+ * Used to pre-fill editable fields (e.g. the goals section on the profile page).
+ */
+export const getQuestionnaireResponses = () =>
+  apiClient
+    .get<{ responses: AnswerPayloadItem[] }>("/questionnaire/responses")
+    .then((res) => res.data);
+
 /** Submit the user's answers as a flat list of key-value pairs for ingestion. */
 export const submitQuestionnaireResponses = (answers: AnswerPayloadItem[]) =>
   apiClient.post("/questionnaire/respond", { answers });

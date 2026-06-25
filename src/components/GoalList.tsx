@@ -87,6 +87,12 @@ function GoalItem({
       )
     : null;
 
+  // Interpolate goal name if it contains placeholders like {{goal}}
+  const displayName = renderDescription(
+    goal.goalName,
+    goal.dynamicParams ?? {},
+  );
+
   // Optional link to an explanatory article (mostly from the data center).
   const infoLink = resolveInfoLink(goal.dynamicParams?.bank_info_link);
 
@@ -134,7 +140,7 @@ function GoalItem({
                   : "text-gray-900 dark:text-gray-100"
               }`}
             >
-              {goal.goalName}
+              {displayName}
             </p>
 
             {/* Description from template */}

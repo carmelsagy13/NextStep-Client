@@ -32,6 +32,25 @@ export function byOrderIndex<T extends { orderIndex?: number }>(
   return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
 }
 
+// Keys/labels that signal a NUMBER question holds a monetary amount.
+const MONEY_KEY_PATTERN =
+  /(amount|income|expense|salary|saving|debt|loan|rent|tuition|budget|price|cost|payment|balance|worth|fund|sum)/i;
+
+/**
+ * Heuristic: does this NUMBER question represent money? True when its
+ * questionKey matches a money-related keyword, or its label contains a
+ * shekel sign / "שקל". Used to apply thousands-separator formatting.
+ */
+export function isMoneyQuestion(
+  question: Question,
+  lang: Lang = DEFAULT_LANG,
+): boolean {
+  if (question.type !== "NUMBER") return false;
+  if (MONEY_KEY_PATTERN.test(question.questionKey)) return true;
+  const text = localize(question.text, lang);
+  return text.includes("₪") || /שקל|ש"ח|ש״ח/.test(text);
+}
+
 function isEmptyValue(value: AnswerValue): boolean {
   return (
     value === undefined ||
