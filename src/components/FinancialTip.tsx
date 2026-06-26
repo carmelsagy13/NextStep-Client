@@ -19,8 +19,8 @@ export default function FinancialTip({ rotateMs = 10000 }: FinancialTipProps) {
   // repeats a tip until the whole list has been shown.
   const tips = useMemo(() => {
     const list = articles
-      .filter((a) => a.excerpt?.trim())
-      .map((a) => ({ id: a.id, title: a.title, excerpt: a.excerpt }));
+      .filter((a) => a.summary?.trim())
+      .map((a) => ({ id: a.id, title: a.title, summary: a.summary }));
     for (let i = list.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [list[i], list[j]] = [list[j], list[i]];
@@ -63,7 +63,7 @@ export default function FinancialTip({ rotateMs = 10000 }: FinancialTipProps) {
             {tip.title}
           </p>
           <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-300">
-            {tip.excerpt}
+            {tip.summary}
           </p>
         </div>
       </div>
