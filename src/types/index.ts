@@ -179,3 +179,43 @@ export interface UserNotification {
     triggerType: string;
   };
 }
+
+// Aspirations (overarching financial goals) — dedicated store + REST endpoints.
+// Replaces the old questionnaire-response goal keys (q_financial_goals, q_goal_*).
+
+/** A dynamic attribute the user fills in for a given goal type. */
+export interface GoalAttributeSpec {
+  key: string; // e.g. "timeframeMonths"
+  type: "number" | "string" | "boolean" | "date" | "string[]";
+  required?: boolean;
+  label?: { he: string; en?: string };
+}
+
+/** A selectable goal type from GET /aspirations/types (data-driven catalog). */
+export interface GoalType {
+  code: string; // e.g. "wedding_event" — STABLE id used when creating
+  label: { he: string; en?: string };
+  category: string | null; // e.g. "short_term"
+  supportsAmount: boolean; // false → hide amount input
+  supportsTimeframe: boolean; // false → hide date/timeframe input
+  attributeSchema: GoalAttributeSpec[] | null; // dynamic fields to render & send in `attributes`
+  defaultPriority: number; // sort ascending
+  isActive: boolean;
+}
+
+export type AspirationStatus = "active" | "achieved" | "abandoned";
+
+/** The current user's overarching goal from GET /aspirations. */
+export interface Aspiration {
+  aspirationId: string; // UUID — use for PATCH/DELETE
+  goalTypeCode: string; // FK to GoalType.code
+  title: string; // Hebrew display title (snapshot)
+  targetAmount: string | null; // DECIMAL serialized as STRING — parse with Number()
+  targetDate: string | null; // "YYYY-MM-DD" (or ISO) — may be null
+  attributes: Record<string, unknown> | null; // e.g. { timeframeMonths: 13 }
+  status: AspirationStatus;
+  revision: number;
+  lastSyncedRevision: number | null;
+  createdAt: string;
+  updatedAt: string;
+}

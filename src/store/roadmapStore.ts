@@ -20,6 +20,12 @@ interface RoadmapStore {
   /** Hydrate store from initial page load (GET /roadmap + GET /goals) */
   hydrate: (roadmapState: RoadmapState | null, goals: UserGoal[]) => void;
 
+  /**
+   * Replace just the goals list (e.g. after re-fetching GET /goals once the
+   * server re-synced roadmap tasks following an aspiration change).
+   */
+  setGoals: (goals: UserGoal[]) => void;
+
   /** Hydrate store from a POST /openfinance/upload response */
   setFromUpload: (payload: UploadPayload) => void;
 
@@ -45,6 +51,8 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
   goals: [],
 
   hydrate: (roadmapState, goals) => set({ roadmapState, goals }),
+
+  setGoals: (goals) => set({ goals }),
 
   setFromUpload: (payload) =>
     set({
