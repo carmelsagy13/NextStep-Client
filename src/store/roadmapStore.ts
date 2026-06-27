@@ -42,6 +42,12 @@ interface RoadmapStore {
    */
   markGoalComplete: (goalId: string) => void;
 
+  /**
+   * Set a goal's status directly (e.g. toggling a task between COMPLETED and
+   * ACTIVE from the task card). Manages `completedAt` accordingly.
+   */
+  setGoalStatus: (goalId: string, status: UserGoalStatus) => void;
+
   /** Clear all analysis state (e.g. on logout) */
   reset: () => void;
 }
@@ -86,6 +92,22 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
               ...g,
               status: UserGoalStatus.COMPLETED,
               completedAt: new Date().toISOString(),
+            }
+          : g,
+      ),
+    })),
+
+  setGoalStatus: (goalId, status) =>
+    set((state) => ({
+      goals: state.goals.map((g) =>
+        g.goalId === goalId
+          ? {
+              ...g,
+              status,
+              completedAt:
+                status === UserGoalStatus.COMPLETED
+                  ? (g.completedAt ?? new Date().toISOString())
+                  : null,
             }
           : g,
       ),

@@ -2,14 +2,16 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Target,
-  CheckCircle2,
   Loader2,
   Check,
+  Pencil,
+  X,
   BookOpen,
   ExternalLink,
 } from "lucide-react";
 import { useRoadmapStore } from "../store/roadmapStore";
 import { updateGoal } from "../api/goals.api";
+import { formatThousands, parseThousands } from "../lib/utils";
 import type { UserGoal } from "../types";
 import { UserGoalStatus } from "../types";
 
@@ -65,11 +67,17 @@ function GoalItem({
   goal: UserGoal;
   isAnimating?: boolean;
 }) {
-  const markGoalComplete = useRoadmapStore((s) => s.markGoalComplete);
-  const [completing, setCompleting] = useState(false);
+  const setGoalStatus = useRoadmapStore((s) => s.setGoalStatus);
+  const updateGoalProgress = useRoadmapStore((s) => s.updateGoalProgress);
+  const [toggling, setToggling] = useState(false);
+  const [editingAmount, setEditingAmount] = useState(false);
+  const [amountDraft, setAmountDraft] = useState("");
+  const [savingAmount, setSavingAmount] = useState(false);
+  const [error, setError] = useState("");
 
   const isCompleted = goal.status === UserGoalStatus.COMPLETED;
   const hasTarget = goal.targetAmount != null && Number(goal.targetAmount) > 0;
+  // Derived percentage: (currentAmount / targetAmount) * 100, clamped to 100.
   const progress = hasTarget
     ? Math.min(
         100,
@@ -96,22 +104,56 @@ function GoalItem({
   // Optional link to an explanatory article (mostly from the data center).
   const infoLink = resolveInfoLink(goal.dynamicParams?.bank_info_link);
 
-  const handleMarkComplete = async () => {
-    if (isCompleted || completing) return;
-    setCompleting(true);
+  // Toggle the task between COMPLETED and ACTIVE. Optimistically flips the
+  // status in the store and reverts if the API call fails.
+  const handleToggleComplete = async () => {
+    if (toggling) return;
+    setError("");
+    setToggling(true);
+    const prevStatus = goal.status;
+    const nextStatus = isCompleted
+      ? UserGoalStatus.ACTIVE
+      : UserGoalStatus.COMPLETED;
+    setGoalStatus(goal.goalId, nextStatus); // optimistic
     try {
-      await updateGoal(goal.goalId, {
-        status: UserGoalStatus.COMPLETED,
-        ...(goal.targetAmount != null && Number(goal.targetAmount) > 0
-          ? { currentAmount: Number(goal.targetAmount) }
-          : {}),
-      });
-      markGoalComplete(goal.goalId);
+      await updateGoal(goal.goalId, { status: nextStatus });
     } catch {
-      // Silently revert on error — the store is unchanged because we
-      // only called markGoalComplete on success.
+      setGoalStatus(goal.goalId, prevStatus); // revert
+      setError("שגיאה בעדכון — נסה שוב");
     } finally {
-      setCompleting(false);
+      setToggling(false);
+    }
+  };
+
+  const startEditAmount = () => {
+    // currentAmount may be a decimal string ("2000.00"); take the whole part.
+    setAmountDraft(String(Math.round(Number(goal.currentAmount) || 0)));
+    setError("");
+    setEditingAmount(true);
+  };
+
+  const cancelEditAmount = () => {
+    setEditingAmount(false);
+    setError("");
+  };
+
+  // Save a manually-typed progress amount. Optimistically updates the store
+  // (which re-derives status/percentage) and reverts on failure.
+  const handleSaveAmount = async () => {
+    if (savingAmount) return;
+    setError("");
+    setSavingAmount(true);
+    const amount = amountDraft === "" ? 0 : Number(amountDraft);
+    const prevAmount = Number(goal.currentAmount) || 0;
+    updateGoalProgress(goal.goalId, amount); // optimistic
+    try {
+      await updateGoal(goal.goalId, { currentAmount: amount });
+      setEditingAmount(false);
+    } catch {
+      updateGoalProgress(goal.goalId, prevAmount); // revert
+      setError("שגיאה בשמירה — נסה שוב");
+    } finally {
+      setSavingAmount(false);
     }
   };
 
@@ -127,11 +169,27 @@ function GoalItem({
       <div className="flex items-start justify-between gap-3">
         {/* Icon + name */}
         <div className="flex items-start gap-2.5">
-          {isCompleted && (
-            <div className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-primary flex items-center justify-center">
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={isCompleted}
+            aria-label={
+              isCompleted ? "סמן את המשימה כלא הושלמה" : "סמן את המשימה כהושלמה"
+            }
+            onClick={handleToggleComplete}
+            disabled={toggling}
+            className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border flex items-center justify-center transition active:scale-95 disabled:opacity-50 ${
+              isCompleted
+                ? "bg-primary border-primary"
+                : "border-gray-300 hover:border-primary dark:border-gray-600"
+            }`}
+          >
+            {toggling ? (
+              <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
+            ) : isCompleted ? (
               <Check className="h-3 w-3 text-primary-foreground" />
-            </div>
-          )}
+            ) : null}
+          </button>
           <div>
             <p
               className={`text-sm font-semibold ${
@@ -181,44 +239,84 @@ function GoalItem({
             )}
 
             {/* Monetary progress (only when there's a numeric target) */}
-            {hasTarget && (
-              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                ₪{Number(goal.currentAmount).toLocaleString()} / ₪
-                {Number(goal.targetAmount).toLocaleString()}
-                {goal.targetDate && (
-                  <>
-                    {" "}
-                    &middot; עד{" "}
-                    {new Date(goal.targetDate).toLocaleDateString("he-IL", {
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </>
-                )}
+            {hasTarget &&
+              (editingAmount ? (
+                <div className="mt-2 flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    dir="ltr"
+                    autoFocus
+                    value={formatThousands(amountDraft)}
+                    onChange={(e) =>
+                      setAmountDraft(parseThousands(e.target.value))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveAmount();
+                      if (e.key === "Escape") cancelEditAmount();
+                    }}
+                    aria-label="סכום התקדמות נוכחי"
+                    className="w-28 rounded-md border border-gray-300 bg-white px-2 py-1 text-end text-xs dark:border-gray-700 dark:bg-gray-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveAmount}
+                    disabled={savingAmount}
+                    aria-label="שמור התקדמות"
+                    className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground transition hover:bg-primary/90 active:scale-95 disabled:opacity-50"
+                  >
+                    {savingAmount ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Check className="h-3 w-3" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelEditAmount}
+                    disabled={savingAmount}
+                    aria-label="ביטול"
+                    className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-300 text-gray-500 transition hover:bg-gray-100 active:scale-95 disabled:opacity-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    ₪{Number(goal.currentAmount).toLocaleString()} / ₪
+                    {Number(goal.targetAmount).toLocaleString()}
+                    {goal.targetDate && (
+                      <>
+                        {" "}
+                        &middot; עד{" "}
+                        {new Date(goal.targetDate).toLocaleDateString("he-IL", {
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </>
+                    )}
+                  </p>
+                  {!isCompleted && (
+                    <button
+                      type="button"
+                      onClick={startEditAmount}
+                      aria-label="עדכון התקדמות"
+                      className="shrink-0 text-gray-400 transition hover:text-primary active:scale-95"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+
+            {error && (
+              <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                {error}
               </p>
             )}
           </div>
         </div>
-
-        {/* Mark complete button */}
-        {!isCompleted && (
-          <button
-            type="button"
-            onClick={handleMarkComplete}
-            disabled={completing}
-            aria-label={`Mark "${goal.goalName}" as complete`}
-            className="shrink-0 flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground transition
-              hover:bg-primary/90 active:scale-95
-              disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {completing ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-3 w-3" />
-            )}
-            סיימתי
-          </button>
-        )}
       </div>
 
       {/* Progress bar */}
