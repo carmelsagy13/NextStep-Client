@@ -25,7 +25,8 @@ export default function FinancialTip({ rotateMs = 10000 }: FinancialTipProps) {
       const j = Math.floor(Math.random() * (i + 1));
       [list[i], list[j]] = [list[j], list[i]];
     }
-    return list;
+    // Only surface a random 3 per mount so the user discovers new tips over time.
+    return list.slice(0, 3);
   }, []);
 
   const [index, setIndex] = useState(0);

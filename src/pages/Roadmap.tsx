@@ -242,16 +242,6 @@ const Roadmap = () => {
     setCurrentIndex(Math.max(0, Math.min(4, idx)));
   }, [currentStepId]);
 
-  // One-off celebration after login (set in Login.tsx) — used to test the
-  // confetti effect. Fires once the roadmap is ready, then clears the flag.
-  useEffect(() => {
-    if (pageStatus !== "ready") return;
-    if (sessionStorage.getItem("nextstep:celebrate") === "1") {
-      sessionStorage.removeItem("nextstep:celebrate");
-      setShowConfetti(true);
-    }
-  }, [pageStatus]);
-
   /** Called when the refresh panel successfully loads new data. */
   const handleRefreshSuccess = async () => {
     // Re-analysis may advance the user's step — refetch the authoritative

@@ -208,13 +208,6 @@ function GoalItem({
               </p>
             )}
 
-            {/* AI Insight */}
-            {goal.aiInsight && !isCompleted && (
-              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-500 leading-relaxed">
-                {goal.aiInsight}
-              </p>
-            )}
-
             {/* Link to an explanatory article */}
             {infoLink && !isCompleted && (
               infoLink.isInternal ? (

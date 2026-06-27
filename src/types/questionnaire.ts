@@ -9,7 +9,9 @@ export type QuestionType =
   | "SINGLE_CHOICE"
   | "MULTIPLE_CHOICE"
   | "TEXT"
-  | "NUMBER";
+  | "NUMBER"
+  | "DATE"
+  | "DURATION";
 
 export type DependencyOperator =
   | "EQUALS"

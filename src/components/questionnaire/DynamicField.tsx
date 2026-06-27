@@ -2,9 +2,25 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { he, enUS } from "date-fns/locale";
 import type { Lang, Question } from "@/types/questionnaire";
-import { byOrderIndex, isMoneyQuestion, localize } from "@/lib/questionnaireEngine";
-import { formatThousands, parseThousands } from "@/lib/utils";
+import {
+  byOrderIndex,
+  formatDateISO,
+  isMoneyQuestion,
+  localize,
+  parseDateISO,
+} from "@/lib/questionnaireEngine";
+import { formatThousands, parseThousands, cn } from "@/lib/utils";
 import type { QuestionnaireEngine } from "@/hooks/useQuestionnaireEngine";
 
 interface DynamicFieldProps {
@@ -145,6 +161,128 @@ export function DynamicField({ question, engine, lang }: DynamicFieldProps) {
             }
             aria-invalid={!!error}
           />
+        );
+      }
+
+      case "DATE": {
+        const dateLocale = lang === "he" ? he : enUS;
+        const selectedDate = parseDateISO(value as string | undefined);
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                dir={dir}
+                aria-invalid={!!error}
+                className={cn(
+                  "w-full justify-start gap-2 font-normal",
+                  !selectedDate && "text-muted-foreground",
+                )}
+              >
+                <CalendarIcon className="h-4 w-4" />
+                {selectedDate
+                  ? format(selectedDate, "PPP", { locale: dateLocale })
+                  : lang === "he"
+                    ? "בחר תאריך"
+                    : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                locale={dateLocale}
+                captionLayout="dropdown-buttons"
+                fromYear={1920}
+                toYear={new Date().getFullYear() + 50}
+                selected={selectedDate ?? undefined}
+                defaultMonth={selectedDate ?? undefined}
+                onSelect={(date) =>
+                  setAnswer(key, date ? formatDateISO(date) : undefined)
+                }
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        );
+      }
+
+      case "DURATION": {
+        const totalMonths =
+          value === undefined || value === null ? undefined : Number(value);
+        const years =
+          totalMonths === undefined ? "" : Math.floor(totalMonths / 12);
+        const months =
+          totalMonths === undefined ? "" : totalMonths % 12;
+
+        const commit = (nextYears: number, nextMonths: number) => {
+          const total = nextYears * 12 + nextMonths;
+          setAnswer(key, Number.isFinite(total) ? total : undefined);
+        };
+
+        return (
+          <div dir={dir} className="flex flex-wrap gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm text-muted-foreground">
+                {lang === "he" ? "שנים" : "Years"}
+              </span>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                className="w-24"
+                value={years === "" ? "" : String(years)}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  if (raw === "") {
+                    setAnswer(
+                      key,
+                      months === "" || Number(months) === 0
+                        ? undefined
+                        : Number(months),
+                    );
+                    return;
+                  }
+                  commit(
+                    Math.max(0, Math.floor(Number(raw))),
+                    months === "" ? 0 : Number(months),
+                  );
+                }}
+                aria-invalid={!!error}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm text-muted-foreground">
+                {lang === "he" ? "חודשים" : "Months"}
+              </span>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                className="w-24"
+                value={months === "" ? "" : String(months)}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  if (raw === "") {
+                    setAnswer(
+                      key,
+                      years === "" || Number(years) === 0
+                        ? undefined
+                        : Number(years) * 12,
+                    );
+                    return;
+                  }
+                  commit(
+                    years === "" ? 0 : Number(years),
+                    Math.max(0, Math.floor(Number(raw))),
+                  );
+                }}
+                aria-invalid={!!error}
+              />
+            </div>
+          </div>
         );
       }
 

@@ -60,6 +60,39 @@ function isEmptyValue(value: AnswerValue): boolean {
   );
 }
 
+/** Strict `YYYY-MM-DD` matcher. */
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Format a `Date` into a `YYYY-MM-DD` string using its LOCAL calendar date.
+ * Avoids the UTC shift that `Date.prototype.toISOString()` introduces.
+ */
+export function formatDateISO(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Parse a `YYYY-MM-DD` string into a local `Date`, returning null if the
+ * format is wrong or the date is impossible (e.g. `2026-02-30`).
+ */
+export function parseDateISO(value: string | undefined | null): Date | null {
+  if (!value || !ISO_DATE_PATTERN.test(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  // Reject values that JS rolled over (e.g. Feb 30 -> Mar 2).
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+  return date;
+}
+
 /** Evaluate a single dependency rule against the current answer state. */
 function evaluateRule(rule: Dependency, state: AnswerState): boolean {
   const actual = state[rule.triggerQuestionKey];
@@ -177,6 +210,25 @@ export function validateQuestion(
 ): string | null {
   if (isEmptyValue(value)) {
     return question.isRequired ? "שדה חובה" : null;
+  }
+
+  // DATE and DURATION carry intrinsic validation regardless of `validation` rules.
+  if (question.type === "DATE") {
+    if (typeof value !== "string" || !parseDateISO(value)) {
+      return "יש לבחור תאריך תקין";
+    }
+  }
+
+  if (question.type === "DURATION") {
+    const months = Number(value);
+    if (!Number.isInteger(months) || months < 0) {
+      return "יש להזין מספר חודשים תקין";
+    }
+    const durationRules = question.validation;
+    if (durationRules?.min !== undefined && months < durationRules.min)
+      return `הערך המינימלי הוא ${durationRules.min} חודשים`;
+    if (durationRules?.max !== undefined && months > durationRules.max)
+      return `הערך המקסימלי הוא ${durationRules.max} חודשים`;
   }
 
   const rules = question.validation;
