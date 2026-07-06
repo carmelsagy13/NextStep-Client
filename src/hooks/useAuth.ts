@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useAuthStore } from "../store/authStore";
+import { useRoadmapStore } from "../store/roadmapStore";
 import {
   login as apiLogin,
   register as apiRegister,
@@ -31,13 +32,28 @@ export function useAuth() {
     ): Promise<{ error?: string; redirectTo?: string }> => {
       try {
         const res = await apiLogin(email, password);
+        // TEMP diagnostic — check `demoMode` and whether `demoResult.mode` is "full".
+        console.log("[useAuth.login] response data:", res.data);
         const {
           accessToken: token,
           userId: uid,
           id: displayId,
           email: userEmail,
+          demoMode,
+          demoResult,
         } = res.data;
-        setAuth(token, uid, displayId, userEmail);
+        setAuth(token, uid, displayId, userEmail, demoMode);
+
+        // In Demo Mode the login call itself runs the demo pipeline server-side.
+        // On the first login (no profile), the full result is returned inline —
+        // hydrate the store so the roadmap renders instantly. On subsequent
+        // logins the sync runs in the background and the roadmap loads normally.
+        if (demoMode) {
+          if (demoResult?.mode === "full") {
+            useRoadmapStore.getState().setFromUpload(demoResult.full);
+          }
+          return { redirectTo: "/roadmap" };
+        }
 
         // Check whether this user already has financial data so the caller
         // can navigate to /setup (no data) or /roadmap (data present).
@@ -81,7 +97,7 @@ export function useAuth() {
       id: string,
       email: string,
       password: string,
-    ): Promise<{ error?: string }> => {
+    ): Promise<{ error?: string; redirectTo?: string }> => {
       try {
         const res = await apiRegister(id, email, password);
         const {
@@ -89,9 +105,16 @@ export function useAuth() {
           userId: uid,
           id: displayId,
           email: userEmail,
+          demoMode,
+          demoResult,
         } = res.data;
-        setAuth(token, uid, displayId, userEmail);
-        return {};
+        setAuth(token, uid, displayId, userEmail, demoMode);
+        // Demo users skip the questionnaire — the login/register call runs the
+        // pipeline server-side. Hydrate from the inline result when present.
+        if (demoMode && demoResult?.mode === "full") {
+          useRoadmapStore.getState().setFromUpload(demoResult.full);
+        }
+        return { redirectTo: demoMode ? "/roadmap" : undefined };
       } catch (err) {
         const msg = (
           err as { response?: { data?: { message?: string | string[] } } }

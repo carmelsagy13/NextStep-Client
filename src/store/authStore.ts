@@ -10,6 +10,8 @@ interface AuthState {
   /** Human-readable 9-character identifier (e.g. national ID). */
   displayId: string | null;
   email: string | null;
+  /** Whether the backend flagged this session for the automated Demo Mode. */
+  demoMode: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   userProfile: any | null;
   setAuth: (
@@ -17,6 +19,7 @@ interface AuthState {
     userId: string,
     displayId?: string,
     email?: string,
+    demoMode?: boolean,
   ) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setUserProfile: (profile: any) => void;
@@ -30,9 +33,10 @@ export const useAuthStore = create<AuthState>()(
       userId: null,
       displayId: null,
       email: null,
+      demoMode: false,
       userProfile: null,
 
-      setAuth: (accessToken, userId, displayId, email) => {
+      setAuth: (accessToken, userId, displayId, email, demoMode) => {
         let resolvedEmail = email ?? null;
         if (!resolvedEmail) {
           try {
@@ -47,6 +51,7 @@ export const useAuthStore = create<AuthState>()(
           userId,
           displayId: displayId ?? null,
           email: resolvedEmail,
+          demoMode: demoMode ?? false,
         });
       },
 
@@ -60,6 +65,7 @@ export const useAuthStore = create<AuthState>()(
           userId: null,
           displayId: null,
           email: null,
+          demoMode: false,
           userProfile: null,
         });
       },
@@ -67,8 +73,23 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "nextstep-auth",
       storage: createJSONStorage(() => sessionStorage),
+      // `demoMode` is a per-login decision made by the server — it must never
+      // be persisted, otherwise a stale `true` from a previous demo login would
+      // survive page refreshes even after DEMO_MODE is turned off on the
+      // backend. Persist everything else.
+      partialize: (state) => ({
+        accessToken: state.accessToken,
+        userId: state.userId,
+        displayId: state.displayId,
+        email: state.email,
+        userProfile: state.userProfile,
+      }),
       onRehydrateStorage: () => (state) => {
-        if (state && !state.email && state.accessToken) {
+        if (!state) return;
+        // Always start a rehydrated session as non-demo; only a fresh
+        // login/register response can re-enable Demo Mode.
+        state.demoMode = false;
+        if (!state.email && state.accessToken) {
           try {
             const payload = JSON.parse(atob(state.accessToken.split(".")[1]));
             state.email = payload.email ?? null;

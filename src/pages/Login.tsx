@@ -31,9 +31,10 @@ export default function Login() {
     setIsSubmitting(true);
     try {
       const { data } = await login(email.trim(), password);
-      const { accessToken, userId } = data as AuthResponse;
-      setAuth(accessToken, userId);
-      navigate('/analyze');
+      const { accessToken, userId, id, email: userEmail, demoMode } =
+        data as AuthResponse;
+      setAuth(accessToken, userId, id, userEmail, demoMode);
+      navigate(demoMode ? '/roadmap' : '/analyze');
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string }; status?: number } };
       const status = axiosErr.response?.status;

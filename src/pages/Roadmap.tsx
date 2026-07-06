@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Shield,
@@ -14,16 +14,19 @@ import {
   ChevronDown,
   Sparkles,
   RotateCcw,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppNavbar from "@/components/app/AppNavbar";
 import RoadmapSteps from "@/components/roadmap/RoadmapSteps";
 import DataLoadSection from "@/components/DataLoadSection";
+import DemoLoadingModal from "@/components/DemoLoadingModal";
 import GoalList from "@/components/GoalList";
 import Confetti from "@/components/Confetti";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/authStore";
 import { useRoadmapStore } from "@/store/roadmapStore";
+import { triggerDemo } from "@/api/demo.api";
 import { getRoadmap } from "@/api/roadmap.api";
 import { getGoals } from "@/api/goals.api";
 import {
@@ -149,12 +152,19 @@ const Roadmap = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { accessToken } = useAuthStore();
-  const { hydrate, reset, roadmapState, goals } = useRoadmapStore();
+  // Backend-driven Demo Mode flag (set on login/register).
+  const demoMode = useAuthStore((s) => s.demoMode);
+  const { hydrate, reset, roadmapState, goals, setFromUpload, setGoals } =
+    useRoadmapStore();
   // Authoritative current step — read from GET /profile, never the roadmap state.
   const currentStepId = useCurrentStep();
 
   const [pageStatus, setPageStatus] = useState<"loading" | "ready">("loading");
   const [showUpload, setShowUpload] = useState(false);
+  // Demo Mode: automated generation state
+  const [demoGenerating, setDemoGenerating] = useState(false);
+  const [demoError, setDemoError] = useState("");
+  const demoTriggered = useRef(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [apiSteps, setApiSteps] = useState<RoadmapStep[] | undefined>();
 
@@ -193,7 +203,7 @@ const Roadmap = () => {
       } catch (err) {
         const status = (err as { response?: { status?: number } }).response
           ?.status;
-        if (status === 404) {
+        if (status === 404 && !demoMode) {
           reset();
           // No profile → redirect to setup flow
           navigate("/setup", { replace: true });
@@ -217,7 +227,9 @@ const Roadmap = () => {
         hydrate(loadedState, loadedGoals);
 
         const hasData = !!loadedState || loadedGoals.length > 0;
-        if (!hasData) {
+        // In Demo Mode we auto-generate the roadmap on entry, so don't bounce
+        // to the setup flow when there's no data yet.
+        if (!hasData && !demoMode) {
           navigate("/setup", { replace: true });
           return;
         }
@@ -227,14 +239,92 @@ const Roadmap = () => {
 
         setShowUpload(false);
       } catch {
-        setShowUpload(true);
+        // In Demo Mode the manual fallback panel is hidden; the demo generation
+        // flow (below) handles producing the roadmap instead.
+        setShowUpload(!demoMode);
       } finally {
         setPageStatus("ready");
       }
     }
 
     loadData();
-  }, [accessToken, hydrate, reset, navigate]);
+  }, [accessToken, hydrate, reset, navigate, demoMode]);
+
+  // Demo Mode fallback: the login/register call normally runs the demo pipeline
+  // server-side and returns the data inline. This only fires as a safety net —
+  // if we land on the roadmap in Demo Mode with no data yet — by calling the
+  // standalone POST /demo/trigger and showing the loading modal meanwhile.
+  const runDemoTrigger = useCallback(async () => {
+    setDemoGenerating(true);
+    setDemoError("");
+    try {
+      const { data } = await triggerDemo();
+
+      if (data.mode === "full") {
+        // First run (no profile yet): the backend ran the full Open Finance
+        // + LLM pipeline. Persist the fresh output so the roadmap and goals
+        // render reactively as soon as the modal closes.
+        setFromUpload(data.full);
+        // Refetch the roadmap steps so freshly-generated step titles (which
+        // weren't available on the pre-generation load) render correctly.
+        try {
+          const roadmapRes = await getRoadmap();
+          const loadedSteps: RoadmapStep[] = Array.isArray(
+            roadmapRes.data?.steps,
+          )
+            ? roadmapRes.data.steps
+            : [];
+          setApiSteps(loadedSteps);
+        } catch {
+          // Non-critical — fall back to the built-in step labels.
+        }
+        const step = await refreshCurrentStep();
+        setCurrentIndex(Math.max(0, Math.min(4, step - 1)));
+        setShowUpload(false);
+      } else {
+        // Subsequent run: lightweight aspiration sync — silently refresh the
+        // task list (and authoritative step) without navigating.
+        const [goalsRes, step] = await Promise.all([
+          getGoals(),
+          refreshCurrentStep(),
+        ]);
+        const refreshedGoals: UserGoal[] = Array.isArray(goalsRes.data)
+          ? goalsRes.data
+          : [];
+        setGoals(refreshedGoals);
+        setCurrentIndex(Math.max(0, Math.min(4, step - 1)));
+      }
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      setDemoError(
+        error.response?.data?.message ??
+          error.message ??
+          "אירעה שגיאה בעת יצירת המפה שלך. אנא נסה שוב מאוחר יותר.",
+      );
+    } finally {
+      setDemoGenerating(false);
+    }
+  }, [setFromUpload, setGoals]);
+
+  useEffect(() => {
+    if (!demoMode || !accessToken || demoTriggered.current) return;
+    // Wait for the initial load to settle before deciding whether a fallback
+    // generation is needed.
+    if (pageStatus !== "ready") return;
+    const hasData = !!roadmapState || goals.length > 0;
+    if (hasData) return; // login already produced the roadmap — nothing to do.
+    demoTriggered.current = true;
+    runDemoTrigger();
+  }, [accessToken, demoMode, pageStatus, roadmapState, goals, runDemoTrigger]);
+
+  /** Retry the demo generation after a failure (from the error screen). */
+  const handleDemoRetry = () => {
+    demoTriggered.current = true;
+    runDemoTrigger();
+  };
 
   // Sync stage index whenever the authoritative step changes (after refresh)
   useEffect(() => {
@@ -364,10 +454,41 @@ const Roadmap = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Confetti fire={showConfetti} onComplete={() => setShowConfetti(false)} />
+      {/* Demo Mode: automated LLM generation loading overlay */}
+      <DemoLoadingModal open={demoGenerating} errorMsg={demoError} />
       <AppNavbar />
 
-      {/* Fallback upload state (e.g. if API fails at load time) */}
-      {showUpload && (
+      {/* Demo Mode error state — shown instead of a blank page when the
+          automated generation fails and there's no roadmap to display. */}
+      {demoMode && !demoGenerating && demoError && !hasData && (
+        <main className="flex-1 p-4" dir="rtl">
+          <div className="max-w-md mx-auto pt-12">
+            <div className="glass-card p-6 text-center space-y-4">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10">
+                <AlertTriangle className="h-7 w-7 text-destructive" />
+              </div>
+              <div className="space-y-1">
+                <h2 className="font-display text-xl font-bold">משהו השתבש</h2>
+                <p className="text-sm text-muted-foreground">
+                  לא הצלחנו ליצור את המפה הפיננסית שלך כרגע. אנא נסה שוב מאוחר
+                  יותר.
+                </p>
+              </div>
+              <Button
+                onClick={handleDemoRetry}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                נסה שוב
+              </Button>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {/* Fallback upload state (e.g. if API fails at load time). Hidden in
+          Demo Mode, where generation is fully automated. */}
+      {showUpload && !demoMode && (
         <main className="flex-1 p-4">
           <div className="max-w-lg mx-auto space-y-6 pt-4">
             <DataLoadSection
@@ -529,11 +650,16 @@ const Roadmap = () => {
                 {/* Inline collapsible refresh panel */}
                 {showRefreshPanel && (
                   <div className="glass-card p-4 space-y-4 animate-fade-in">
-                    <p className="text-xs text-muted-foreground">
-                      העלה נתונים מעודכנים — ה-LLM יריץ ניתוח מחדש וישמר את
-                      ההתקדמות הקיימת שלך.
-                    </p>
-                    <DataLoadSection onSuccess={handleRefreshSuccess} />
+                    {/* Manual data-loading controls are hidden in Demo Mode. */}
+                    {!demoMode && (
+                      <>
+                        <p className="text-xs text-muted-foreground">
+                          העלה נתונים מעודכנים — ה-LLM יריץ ניתוח מחדש וישמר את
+                          ההתקדמות הקיימת שלך.
+                        </p>
+                        <DataLoadSection onSuccess={handleRefreshSuccess} />
+                      </>
+                    )}
 
                     {/* Test confetti */}
                     <div className="pt-3 border-t border-border">

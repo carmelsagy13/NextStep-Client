@@ -2,6 +2,18 @@
 export interface AuthResponse {
   accessToken: string;
   userId: string;
+  /** Human-readable 9-character identifier (e.g. national ID). */
+  id?: string;
+  email?: string;
+  /** When true, the client should run the automated Demo Mode flow. */
+  demoMode?: boolean;
+  /**
+   * Present on the first Demo Mode login (no profile yet): the login call runs
+   * the full pipeline synchronously and returns the result inline. Undefined on
+   * subsequent logins, where a lightweight sync runs server-side in the
+   * background.
+   */
+  demoResult?: DemoTriggerResponse;
 }
 
 // Financial Snapshot
@@ -126,6 +138,21 @@ export interface UploadAnalysisResponse {
   roadmap_state: RoadmapState;
   user_goals: UserGoal[];
 }
+
+// POST /demo/trigger — automated Demo Mode generation.
+// First call (no profile yet) runs the full Open Finance pipeline; subsequent
+// calls run a lightweight aspiration sync only.
+export interface DemoTriggerFull {
+  mode: "full";
+  full: UploadAnalysisResponse;
+}
+
+export interface DemoTriggerPartial {
+  mode: "partial";
+  partial: { updatedTasksCount: number };
+}
+
+export type DemoTriggerResponse = DemoTriggerFull | DemoTriggerPartial;
 
 // POST /openfinance/connect-api — two-stage response
 export interface ConnectApiConnectionRequired {

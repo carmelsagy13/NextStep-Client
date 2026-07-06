@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import DemoLoadingModal from "@/components/DemoLoadingModal";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
@@ -12,15 +13,32 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // In Demo Mode the login call runs the LLM pipeline server-side and can take
+  // a while. Show the tips modal once the request has been in flight briefly
+  // (so fast, non-generating logins don't flash it).
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
 
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already authenticated
-  if (isAuthenticated) {
-    navigate("/roadmap");
-    return null;
-  }
+  // Redirect if already authenticated (in an effect so we don't call navigate
+  // during render).
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/roadmap", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setShowLoadingModal(false);
+      return;
+    }
+    const t = setTimeout(() => setShowLoadingModal(true), 700);
+    return () => clearTimeout(t);
+  }, [isLoading]);
+
+  if (isAuthenticated) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +60,8 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Demo Mode: tips modal while the login pipeline runs */}
+      <DemoLoadingModal open={showLoadingModal} />
       {/* Background effects */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(168_76%_42%_/_0.06)_0%,_transparent_70%)]" />
       <div className="fixed top-1/4 -left-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />

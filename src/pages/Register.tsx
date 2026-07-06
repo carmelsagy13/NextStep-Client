@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import DemoLoadingModal from "@/components/DemoLoadingModal";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, CreditCard } from "lucide-react";
 
@@ -16,6 +17,18 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // In Demo Mode the register call runs the LLM pipeline server-side; show the
+  // tips modal once the request has been in flight briefly.
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      setShowLoadingModal(false);
+      return;
+    }
+    const t = setTimeout(() => setShowLoadingModal(true), 700);
+    return () => clearTimeout(t);
+  }, [isSubmitting]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +53,7 @@ export default function Register() {
       if (result.error) {
         setError(result.error);
       } else {
-        navigate("/questionnaire");
+        navigate(result.redirectTo ?? "/questionnaire");
       }
     } finally {
       setIsSubmitting(false);
@@ -49,6 +62,8 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Demo Mode: tips modal while the register pipeline runs */}
+      <DemoLoadingModal open={showLoadingModal} />
       {/* Background effects */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(168_76%_42%_/_0.06)_0%,_transparent_70%)]" />
       <div className="fixed top-1/4 -left-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
