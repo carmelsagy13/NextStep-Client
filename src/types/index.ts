@@ -108,6 +108,30 @@ export interface RoadmapState {
   progressPercents?: number;
   progress_percent?: number;
   progress_percents?: number;
+  /** Loss Aversion nudge for advancing to the next stage (may be null). */
+  lossAversion?: LossAversion | null;
+}
+
+// Loss Aversion — quantifies what the user misses by not advancing to the
+// next roadmap stage. Computed server-side during Open Finance analysis.
+export interface LossComponent {
+  key: string;
+  label: string;
+  monthlyAmount: number;
+  annualAmount: number;
+}
+
+export interface LossAversion {
+  nextStepId: number;
+  nextStepTitle: string;
+  nextStepTitleHe: string | null;
+  monthlyLossAmount: number;
+  annualLossAmount: number;
+  lossPercentage: number;
+  timeframeMonths: number;
+  currency: string;
+  components: LossComponent[];
+  computedAt: string;
 }
 
 export interface RoadmapResponse {
@@ -119,6 +143,8 @@ export interface RoadmapResponse {
    * user's step from GET /profile → `currentStep` instead.
    */
   currentStep?: RoadmapStep;
+  /** Loss Aversion nudge (also nested inside `state`). */
+  lossAversion?: LossAversion | null;
 }
 
 /**

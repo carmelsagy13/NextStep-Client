@@ -15,7 +15,7 @@ const LOADING_PHASES = [
   {
     startAt: 15_000,
     progress: 92,
-    label: "מנתח נתונים עם AI (Gemini/Groq)...",
+    label: "מנתח נתונים עם מנגנון AI העוזר הפיננסי שלנו...",
   },
 ] as const;
 

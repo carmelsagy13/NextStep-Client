@@ -1,5 +1,7 @@
 import { Check, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import type { LossAversion } from "@/types";
+import { formatMoney } from "@/lib/utils";
 
 interface Stage {
   id: number;
@@ -10,7 +12,7 @@ interface Stage {
   bgColor: string;
   status: string;
   progress: number;
-  lossAmount: string | null;
+  lossAversion: LossAversion | null;
 }
 
 interface RoadmapStepsProps {
@@ -61,7 +63,7 @@ const RoadmapSteps = ({
   const sideStepVariants = {
     initial: { opacity: 0, scale: 0.3 },
     animate: {
-      opacity: 0.5,
+      opacity: 1,
       scale: 1,
       transition: {
         duration: 0.4,
@@ -81,25 +83,30 @@ const RoadmapSteps = ({
     const Icon = stage.icon;
     const isLocked = stage.status === "locked";
     const isCompleted = stage.status === "completed";
-    const showLossAlert = position === "next" && isLocked && stage.lossAmount;
+    // Loss aversion nudge for the next stage (already gated to a positive
+    // monthly loss when the stages were built).
+    const loss = position === "next" && isLocked ? stage.lossAversion : null;
 
     return (
       <div className="relative">
-        {/* Loss alert bubble next to step */}
-        {showLossAlert && (
-          <div className="absolute top-1/2 -translate-y-1/2 -left-32 z-30">
-            <div className="relative bg-card/95 backdrop-blur-sm border-2 border-destructive/20 px-4 py-2.5 rounded-3xl shadow-lg text-center whitespace-nowrap">
-              <div className="text-[10px] text-muted-foreground leading-tight">
-                את מפסידה
-              </div>
-              <div className="text-base font-bold text-destructive leading-tight">
-                {stage.lossAmount}
-              </div>
-              <div className="text-[10px] text-muted-foreground leading-tight">
-                כל עוד את לא מתקדמת
-              </div>
-              {/* Arrow pointing right - rotated square with matching border */}
-              <div className="absolute top-1/2 -translate-y-1/2 -right-[7px] w-3 h-3 rotate-45 bg-card/95 border-r-2 border-t-2 border-destructive/20" />
+        {/* Loss aversion bubble next to the next step */}
+        {loss && (
+          <div
+            className="absolute top-1/2 -translate-y-1/2 -left-56 z-30"
+            dir="rtl"
+          >
+            <div className="relative w-52 rounded-3xl border-2 border-warning/40 bg-card px-4 py-2.5 text-center shadow-lg">
+              {/* Clean, reliable one-liner — annual idle money */}
+              <p className="text-xs font-medium leading-snug text-foreground">
+                יש לך בערך{" "}
+                <span className="font-bold text-warning">
+                  {formatMoney(loss.annualLossAmount, loss.currency)}
+                </span>{" "}
+                בשנה שלא עובדים בשבילך
+              </p>
+
+              {/* Arrow pointing right toward the step circle */}
+              <div className="absolute top-1/2 -right-[7px] h-3 w-3 -translate-y-1/2 rotate-45 border-r-2 border-t-2 border-warning/40 bg-card" />
             </div>
           </div>
         )}
@@ -109,6 +116,7 @@ const RoadmapSteps = ({
           className={`
             relative w-14 h-14 rounded-full flex items-center justify-center
             transition-all duration-500 ease-out cursor-pointer hover:scale-110
+            opacity-50 hover:opacity-100
             ${
               isLocked
                 ? "bg-muted border-2 border-border"

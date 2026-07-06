@@ -66,6 +66,11 @@ const Questionnaire = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
+  // Scroll back to the top whenever the user moves to another screen/stage.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [screenIndex, isComplete]);
+
   if (!isAuthenticated) return null;
 
   // Loading the questionnaire structure

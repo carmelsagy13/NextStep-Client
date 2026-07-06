@@ -17,6 +17,26 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// Hebrew labels for the English enum values stored in the DB.
+const KNOWLEDGE_LEVEL_LABELS: Record<string, string> = {
+  none: "מתחיל/ה לחלוטין",
+  basic: "ידע בסיסי",
+  intermediate: "בינוני",
+  advanced: "מתקדם",
+};
+
+const RISK_TOLERANCE_LABELS: Record<string, string> = {
+  conservative: "שמרנית",
+  moderate: "מתונה",
+  aggressive: "מכוונת צמיחה",
+};
+
+/** Map a raw enum value to its Hebrew label (case-insensitive), else return as-is. */
+const toHebrewLabel = (
+  value: string | undefined,
+  labels: Record<string, string>,
+): string => (value ? (labels[value.toLowerCase()] ?? value) : "");
+
 const Profile = () => {
   const navigate = useNavigate();
   const { userProfile: user, displayId, email, isAuthenticated } = useAuth();
@@ -195,8 +215,11 @@ const Profile = () => {
                       {profile.knowledgeLevel && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">רמת ידע</span>
-                          <span className="font-medium capitalize">
-                            {profile.knowledgeLevel}
+                          <span className="font-medium">
+                            {toHebrewLabel(
+                              profile.knowledgeLevel,
+                              KNOWLEDGE_LEVEL_LABELS,
+                            )}
                           </span>
                         </div>
                       )}
@@ -205,8 +228,11 @@ const Profile = () => {
                           <span className="text-muted-foreground">
                             סובלנות סיכון
                           </span>
-                          <span className="font-medium capitalize">
-                            {profile.riskTolerance}
+                          <span className="font-medium">
+                            {toHebrewLabel(
+                              profile.riskTolerance,
+                              RISK_TOLERANCE_LABELS,
+                            )}
                           </span>
                         </div>
                       )}

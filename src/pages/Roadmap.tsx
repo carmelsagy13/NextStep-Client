@@ -15,6 +15,7 @@ import {
   Sparkles,
   RotateCcw,
   AlertTriangle,
+  Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppNavbar from "@/components/app/AppNavbar";
@@ -35,8 +36,9 @@ import {
   refreshCurrentStep,
 } from "@/store/currentStep";
 import { resetAccountData } from "@/api/openfinance.api";
+import { formatMoney } from "@/lib/utils";
 import { UserGoalStatus } from "@/types";
-import type { RoadmapState, RoadmapStep, UserGoal } from "@/types";
+import type { LossAversion, RoadmapState, RoadmapStep, UserGoal } from "@/types";
 
 // Step labels matching the backend's 5-stage hierarchy
 const STEP_LABELS: Record<
@@ -115,6 +117,7 @@ function buildStages(
   currentStepId: number,
   progressPercent: number,
   apiSteps?: RoadmapStep[],
+  lossAversion?: LossAversion | null,
 ) {
   return [1, 2, 3, 4, 5].map((stepId) => {
     const meta = STEP_LABELS[stepId] ?? {
@@ -128,6 +131,14 @@ function buildStages(
 
     const isCompleted = stepId < currentStepId;
     const isActive = stepId === currentStepId;
+    // Attach the loss aversion nudge only to the stage it targets, and only
+    // when there's a positive monthly loss to show.
+    const stageLoss =
+      lossAversion &&
+      lossAversion.nextStepId === stepId &&
+      lossAversion.annualLossAmount > 0
+        ? lossAversion
+        : null;
     return {
       id: stepId,
       name,
@@ -143,7 +154,7 @@ function buildStages(
       tasks: [] as { title: string; completed: boolean }[],
       status: isCompleted ? "completed" : isActive ? "active" : "locked",
       progress: isCompleted ? 100 : isActive ? progressPercent : 0,
-      lossAmount: null as string | null,
+      lossAversion: stageLoss,
     };
   });
 }
@@ -217,6 +228,19 @@ const Roadmap = () => {
           getGoals(),
         ]);
         const loadedState: RoadmapState | null = roadmapRes.data?.state ?? null;
+        // The loss aversion nudge is returned both at the top level and nested
+        // inside `state`. Merge the top-level copy in as a fallback so the UI
+        // works regardless of which one the backend populates.
+        if (loadedState && loadedState.lossAversion == null && roadmapRes.data?.lossAversion) {
+          loadedState.lossAversion = roadmapRes.data.lossAversion;
+        }
+        // TEMP diagnostic — confirm whether the backend is returning the
+        // loss aversion payload after login/logout.
+        console.log("[Roadmap.loadData] lossAversion:", {
+          topLevel: roadmapRes.data?.lossAversion,
+          nested: roadmapRes.data?.state?.lossAversion,
+          merged: loadedState?.lossAversion,
+        });
         const loadedSteps: RoadmapStep[] = Array.isArray(roadmapRes.data?.steps)
           ? roadmapRes.data.steps
           : [];
@@ -275,6 +299,24 @@ const Roadmap = () => {
             ? roadmapRes.data.steps
             : [];
           setApiSteps(loadedSteps);
+          // The demo/upload `roadmap_state` may not carry the loss aversion
+          // nudge — backfill it from the fresh GET /roadmap response (top-level
+          // or nested) so the bubble renders after generation.
+          const freshLoss =
+            roadmapRes.data?.lossAversion ??
+            roadmapRes.data?.state?.lossAversion ??
+            null;
+          if (freshLoss) {
+            const store = useRoadmapStore.getState();
+            if (store.roadmapState && store.roadmapState.lossAversion == null) {
+              useRoadmapStore.setState({
+                roadmapState: {
+                  ...store.roadmapState,
+                  lossAversion: freshLoss,
+                },
+              });
+            }
+          }
         } catch {
           // Non-critical — fall back to the built-in step labels.
         }
@@ -439,7 +481,12 @@ const Roadmap = () => {
       : goals.length > 0
         ? Math.round((completedGoals / goals.length) * 100)
         : 0;
-  const financialStages = buildStages(currentStepId, progressPercent, apiSteps);
+  const financialStages = buildStages(
+    currentStepId,
+    progressPercent,
+    apiSteps,
+    roadmapState?.lossAversion,
+  );
   const currentStage = financialStages[currentIndex];
 
   // The stage the user is currently *viewing* on the map (may differ from
@@ -450,6 +497,16 @@ const Roadmap = () => {
   const isCurrentStage = currentStage.status === "active";
   const isCompletedStage = currentStage.status === "completed";
   const isLockedStage = currentStage.status === "locked";
+
+  // Loss aversion figures for the viewed stage. The backend may only populate
+  // the annual amount, so derive the monthly figure from it when missing.
+  const stageLoss = currentStage.lossAversion;
+  const monthlyLoss =
+    stageLoss && Number.isFinite(stageLoss.monthlyLossAmount)
+      ? stageLoss.monthlyLossAmount
+      : stageLoss
+        ? stageLoss.annualLossAmount / 12
+        : 0;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -596,6 +653,61 @@ const Roadmap = () => {
                   className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-muted/40 to-background p-6 text-center"
                   dir="rtl"
                 >
+                  {/* Idle-money opportunity callout — mirrors the map bubble
+                      headline, then expands with the full explanation so the
+                      user who clicked through understands it's potential, not
+                      a loss. */}
+                  {currentStage.lossAversion && (
+                    <div className="mb-5 rounded-2xl border-2 border-warning/40 bg-warning/5 p-4 text-right">
+                      <div className="mb-2 flex items-center justify-end gap-2">
+                        <p className="text-base font-bold leading-snug text-warning">
+                          יש לך בערך{" "}
+                          {formatMoney(
+                            currentStage.lossAversion.annualLossAmount,
+                            currentStage.lossAversion.currency,
+                          )}{" "}
+                          בשנה שלא עובדים בשבילך
+                        </p>
+                        <Coins className="h-5 w-5 shrink-0 text-warning" />
+                      </div>
+
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        לפי ההכנסות וההוצאות שלך, כ־
+                        <span className="font-semibold text-foreground">
+                          {formatMoney(
+                            monthlyLoss,
+                            currentStage.lossAversion.currency,
+                          )}
+                        </span>{" "}
+                        בכל חודש נשארים פנויים אך לא נחסכים ולא מושקעים — הם
+                        פשוט יושבים בעו"ש. במהלך שנה זה מצטבר ל־
+                        <span className="font-semibold text-foreground">
+                          {formatMoney(
+                            currentStage.lossAversion.annualLossAmount,
+                            currentStage.lossAversion.currency,
+                          )}
+                        </span>
+                        .
+                      </p>
+
+                      {currentStage.lossAversion.lossPercentage > 0 && (
+                        <p className="mt-2 text-xs font-medium text-warning/90">
+                          זה כ־
+                          {new Intl.NumberFormat("he-IL", {
+                            maximumFractionDigits: 1,
+                          }).format(currentStage.lossAversion.lossPercentage)}
+                          % מההכנסה השנתית שלך שנשארת לא מנוצלת.
+                        </p>
+                      )}
+
+                      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                        זה לא קנס ולא כסף שהפסדת — זה כסף שאתה יכול להפנות
+                        למטרות שלך. מעבר לשלב הבא יעזור לך להפוך את העודף
+                        הזה לחיסכון והשקעה שצומחים עם הזמן.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5">
                     <StageIcon className="h-7 w-7 text-primary" />
                   </div>

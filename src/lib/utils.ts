@@ -24,3 +24,20 @@ export function parseThousands(value: string): string {
   return value.replace(/\D/g, "");
 }
 
+/**
+ * Format a numeric money value as localised currency (Hebrew locale), with no
+ * fractional digits. e.g. formatMoney(480) -> "\u200f480 \u20aa". Falls back to a
+ * plain "<currency> <amount>" string for unknown currency codes.
+ */
+export function formatMoney(value: number, currency = "ILS"): string {
+  try {
+    return new Intl.NumberFormat("he-IL", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(value);
+  } catch {
+    return `${currency} ${formatThousands(Math.round(value))}`;
+  }
+}
+

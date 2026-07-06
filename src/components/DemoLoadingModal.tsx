@@ -35,7 +35,7 @@ export default function DemoLoadingModal({ open, errorMsg }: Props) {
         onInteractOutside={(e) => e.preventDefault()}
         className="max-w-md [&>button]:hidden"
       >
-        <DialogHeader>
+        <DialogHeader className="text-right sm:text-right">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             בונים את המפה הפיננסית שלך
