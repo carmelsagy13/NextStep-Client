@@ -209,8 +209,9 @@ function GoalItem({
             )}
 
             {/* Link to an explanatory article */}
-            {infoLink && !isCompleted && (
-              infoLink.isInternal ? (
+            {infoLink &&
+              !isCompleted &&
+              (infoLink.isInternal ? (
                 <Link
                   to={infoLink.href}
                   className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
@@ -228,8 +229,7 @@ function GoalItem({
                   <ExternalLink className="h-3.5 w-3.5" />
                   למדו עוד על המשימה הזו
                 </a>
-              )
-            )}
+              ))}
 
             {/* Monetary progress (only when there's a numeric target) */}
             {hasTarget &&
@@ -331,18 +331,31 @@ function GoalItem({
 interface GoalListProps {
   /** Set of goalIds that should play the check-in animation. */
   animatingGoalIds?: Set<string>;
+  /** Only show goals belonging to this roadmap step. */
+  stepId?: number;
+  /** The user's current roadmap step. */
+  currentStepId?: number;
+  /** "current" shows active goals; "past" shows completed goals. */
+  mode?: "current" | "past";
+  /** Overrides the default header text. */
+  title?: string;
 }
 
-export default function GoalList({ animatingGoalIds }: GoalListProps = {}) {
+export default function GoalList({
+  animatingGoalIds,
+  stepId,
+  mode = "current",
+  title,
+}: GoalListProps = {}) {
   const allGoals = useRoadmapStore((s) => s.goals);
 
   // Only show goals the user is currently working on (active) or has
   // finished (completed). Hide removed/abandoned/expired goals.
-  const goals = (allGoals ?? []).filter(
-    (g) =>
-      g.status === UserGoalStatus.ACTIVE ||
-      g.status === UserGoalStatus.COMPLETED,
-  );
+  const goals = (allGoals ?? []).filter((g) => {
+    if (stepId != null && g.roadmapGoal?.stepId !== stepId) return false;
+    if (mode === "past") return g.status === UserGoalStatus.COMPLETED;
+    return g.status === UserGoalStatus.ACTIVE;
+  });
 
   if (goals.length === 0) return null;
 
@@ -357,7 +370,7 @@ export default function GoalList({ animatingGoalIds }: GoalListProps = {}) {
         <div className="flex items-center gap-2">
           <Target className="h-5 w-5 text-black dark:text-white" />
           <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            המשימות שלך
+            {title ?? "המשימות שלך"}
           </h3>
         </div>
         <span className="text-xs text-gray-400">
