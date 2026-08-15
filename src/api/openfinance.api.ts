@@ -8,16 +8,17 @@ export const syncBank = (dateRange?: { from: string; to: string }) =>
   apiClient.post("/openfinance/sync", dateRange ? { dateRange } : {});
 
 /**
- * Direct Bank Sync — connects to the Open Finance provider for the given
- * externalUserId, polls until the job completes server-side, then returns
- * the same analysis payload shape as POST /openfinance/upload.
+ * Direct Bank Sync — connects to the Open Finance provider for the authenticated
+ * user (customer ID resolved server-side from the JWT), polls until the job
+ * completes server-side, then returns the same analysis payload shape as
+ * POST /openfinance/upload.
  *
  * Long timeout (120s) to accommodate backend polling.
  */
-export const connectBankApi = (externalUserId: string) =>
+export const connectBankApi = () =>
   apiClient.post<ConnectApiResponse>(
     "/openfinance/connect-api",
-    { externalUserId },
+    {},
     { timeout: 120_000 },
   );
 

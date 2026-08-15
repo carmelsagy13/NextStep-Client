@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  Building2,
-  Link2,
-  Loader2,
-  AlertCircle,
-  CheckCircle,
-} from "lucide-react";
+import { Link2, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { connectBankApi } from "../api/openfinance.api";
 import { useRoadmapStore } from "../store/roadmapStore";
 import AnalysisLoadingIndicator from "./AnalysisLoadingIndicator";
@@ -17,15 +11,13 @@ interface Props {
 }
 
 export default function BankSyncConnect({ onSuccess }: Props) {
-  const [externalUserId, setExternalUserId] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [consentUrl, setConsentUrl] = useState<string>("");
 
   const setFromUpload = useRoadmapStore((s) => s.setFromUpload);
 
-  const trimmedId = externalUserId.trim();
-  const canSubmit = trimmedId.length > 0 && status !== "loading";
+  const canSubmit = status !== "loading";
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -33,7 +25,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
     setErrorMsg("");
 
     try {
-      const { data } = await connectBankApi(trimmedId);
+      const { data } = await connectBankApi();
       console.log("[BankSyncConnect] connect-api response:", data);
 
       if (data.stage === "CONNECTION_REQUIRED") {
@@ -69,7 +61,7 @@ export default function BankSyncConnect({ onSuccess }: Props) {
     setErrorMsg("");
 
     try {
-      const { data } = await connectBankApi(trimmedId);
+      const { data } = await connectBankApi();
       console.log("[BankSyncConnect] post-consent response:", data);
 
       if (data.stage === "CONNECTION_REQUIRED") {
@@ -96,10 +88,6 @@ export default function BankSyncConnect({ onSuccess }: Props) {
     }
   };
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSubmit();
-  };
-
   return (
     <div className="w-full max-w-lg mx-auto space-y-5 font-sans" dir="rtl">
       {/* ── Header ── */}
@@ -111,35 +99,6 @@ export default function BankSyncConnect({ onSuccess }: Props) {
           חבר את הבנק שלך דרך Open Finance ונביא אוטומטית את הנתונים הפיננסיים
           העדכניים שלך.
         </p>
-      </div>
-
-      {/* ── Input ── */}
-      <div className="space-y-2">
-        <label
-          htmlFor="bank-user-id"
-          className="block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
-        >
-          מזהה משתמש בנקאי
-        </label>
-        <div className="relative">
-          <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            id="bank-user-id"
-            type="text"
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="לדוגמא: user_a1b2c3d4"
-            value={externalUserId}
-            onChange={(e) => setExternalUserId(e.target.value)}
-            onKeyDown={onKeyDown}
-            disabled={status === "loading"}
-            className="w-full rounded-sm border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 transition
-              focus:border-black focus:outline-none focus:ring-1 focus:ring-black
-              disabled:cursor-not-allowed disabled:opacity-60
-              dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500
-              dark:focus:border-white dark:focus:ring-white"
-          />
-        </div>
       </div>
 
       {/* ── Submit Button ── */}

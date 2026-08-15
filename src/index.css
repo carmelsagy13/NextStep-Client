@@ -228,8 +228,7 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: "Inter", sans-serif;
+    @apply bg-background text-foreground antialiased font-sans;
   }
 
   h1,
@@ -238,7 +237,7 @@
   h4,
   h5,
   h6 {
-    font-family: "Space Grotesk", sans-serif;
+    @apply font-display;
   }
 }
 
