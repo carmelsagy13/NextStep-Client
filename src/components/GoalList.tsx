@@ -12,6 +12,7 @@ import {
 import { useRoadmapStore } from "../store/roadmapStore";
 import { updateGoal } from "../api/goals.api";
 import { formatThousands, parseThousands } from "../lib/utils";
+import MarketingGoalCard from "./MarketingGoalCard";
 import type { UserGoal } from "../types";
 import { UserGoalStatus } from "../types";
 
@@ -341,6 +342,30 @@ interface GoalListProps {
   title?: string;
 }
 
+/** At most one sponsored goal is shown, and never above the advice tasks. */
+const MAX_VISIBLE_MARKETING_GOALS = 1;
+const MARKETING_GOAL_INSERT_INDEX = 2;
+
+function isMarketingGoal(goal: UserGoal): boolean {
+  return goal.marketing != null;
+}
+
+/**
+ * Caps sponsored goals and pushes them below the first advice tasks, so the
+ * list still reads as guidance rather than a feed of offers.
+ */
+function orderGoals(goals: UserGoal[]): UserGoal[] {
+  const advice = goals.filter((g) => !isMarketingGoal(g));
+  const sponsored = goals
+    .filter(isMarketingGoal)
+    .slice(0, MAX_VISIBLE_MARKETING_GOALS);
+
+  if (!sponsored.length) return advice;
+
+  const insertAt = Math.min(MARKETING_GOAL_INSERT_INDEX, advice.length);
+  return [...advice.slice(0, insertAt), ...sponsored, ...advice.slice(insertAt)];
+}
+
 export default function GoalList({
   animatingGoalIds,
   stepId,
@@ -351,15 +376,18 @@ export default function GoalList({
 
   // Only show goals the user is currently working on (active) or has
   // finished (completed). Hide removed/abandoned/expired goals.
-  const goals = (allGoals ?? []).filter((g) => {
+  const visibleGoals = (allGoals ?? []).filter((g) => {
     if (stepId != null && g.roadmapGoal?.stepId !== stepId) return false;
     if (mode === "past") return g.status === UserGoalStatus.COMPLETED;
     return g.status === UserGoalStatus.ACTIVE;
   });
 
+  const goals = orderGoals(visibleGoals);
+
   if (goals.length === 0) return null;
 
-  const completed = goals.filter(
+  const trackedGoals = goals.filter((g) => !isMarketingGoal(g));
+  const completed = trackedGoals.filter(
     (g) => g.status === UserGoalStatus.COMPLETED,
   ).length;
 
@@ -374,19 +402,27 @@ export default function GoalList({
           </h3>
         </div>
         <span className="text-xs text-gray-400">
-          {completed}/{goals.length} הושלמו
+          {completed}/{trackedGoals.length} הושלמו
         </span>
       </div>
 
       {/* Goal items */}
       <div className="space-y-2.5">
-        {goals.map((goal) => (
-          <GoalItem
-            key={goal.goalId}
-            goal={goal}
-            isAnimating={animatingGoalIds?.has(goal.goalId)}
-          />
-        ))}
+        {goals.map((goal) =>
+          goal.marketing ? (
+            <MarketingGoalCard
+              key={goal.goalId}
+              goal={goal}
+              marketing={goal.marketing}
+            />
+          ) : (
+            <GoalItem
+              key={goal.goalId}
+              goal={goal}
+              isAnimating={animatingGoalIds?.has(goal.goalId)}
+            />
+          ),
+        )}
       </div>
     </div>
   );

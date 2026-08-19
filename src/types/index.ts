@@ -48,6 +48,35 @@ export const UserGoalStatus = {
 export type UserGoalStatus =
   (typeof UserGoalStatus)[keyof typeof UserGoalStatus];
 
+export const RoadmapGoalType = {
+  PERSONAL: "personal",
+  MARKETING: "marketing",
+  BONUS: "bonus",
+  EDUCATIONAL: "educational",
+} as const;
+
+export type RoadmapGoalType =
+  (typeof RoadmapGoalType)[keyof typeof RoadmapGoalType];
+
+/**
+ * Partner branding + commercial terms for a sponsored goal. Present only while
+ * the backing offer is live — the server nulls it out and reports the goal as
+ * `personal` once the campaign ends.
+ */
+export interface MarketingGoalMeta {
+  offerCode: string;
+  partnerName: string;
+  partnerLogoUrl: string;
+  bannerUrl: string | null;
+  brandColor: string | null;
+  headline: string;
+  subheadline: string | null;
+  benefitTags: string[];
+  ctaLabel: string;
+  ctaUrl: string;
+  disclaimer: string;
+}
+
 export interface UserGoal {
   goalId: string;
   userId: string;
@@ -65,6 +94,8 @@ export interface UserGoal {
   dynamicParams: Record<string, unknown>;
   aiInsight: string | null;
   sourceProfileHistoryId: string | null;
+  goalType?: RoadmapGoalType;
+  marketing?: MarketingGoalMeta | null;
   roadmapGoal?: RoadmapGoal;
 }
 
@@ -72,7 +103,7 @@ export interface UserGoal {
 export interface RoadmapGoal {
   goalId: string;
   stepId: number;
-  type: string;
+  type: RoadmapGoalType;
   title: string;
   descriptionTemplate: string;
   dynamicParams: Record<string, unknown>;
