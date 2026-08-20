@@ -1,5 +1,5 @@
 import apiClient from "./client";
-import type { UserGoalStatus } from "../types";
+import type { GoalDismissalReason, UserGoalStatus } from "../types";
 
 export const getGoals = (status?: UserGoalStatus) =>
   apiClient.get("/goals", { params: status ? { status } : undefined });
@@ -27,3 +27,15 @@ export const updateGoal = (
 
 export const deleteGoal = (goalId: string) =>
   apiClient.post("/goals/delete", { goalId });
+
+/** Retires a task the user considers irrelevant and records why it did not fit. */
+export const dismissGoal = (
+  goalId: string,
+  reason: GoalDismissalReason,
+  note?: string,
+) =>
+  apiClient.post("/goals/dismiss", {
+    goalId,
+    reason,
+    ...(note ? { note } : {}),
+  });

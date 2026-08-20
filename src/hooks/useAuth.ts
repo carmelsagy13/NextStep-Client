@@ -32,26 +32,24 @@ export function useAuth() {
     ): Promise<{ error?: string; redirectTo?: string }> => {
       try {
         const res = await apiLogin(email, password);
-        // TEMP diagnostic — check `demoMode` and whether `demoResult.mode` is "full".
-        console.log("[useAuth.login] response data:", res.data);
         const {
           accessToken: token,
           userId: uid,
           id: displayId,
           email: userEmail,
           demoMode,
-          demoResult,
+          loginAnalysis,
         } = res.data;
         setAuth(token, uid, displayId, userEmail, demoMode);
 
-        // In Demo Mode the login call itself runs the demo pipeline server-side.
-        // On the first login (no profile), the full result is returned inline —
-        // hydrate the store so the roadmap renders instantly. On subsequent
-        // logins the sync runs in the background and the roadmap loads normally.
+        // The login call itself runs the full pipeline server-side (demo data in
+        // Demo Mode, live Open Finance data otherwise) and returns the result
+        // inline — hydrate the store so the roadmap renders instantly.
+        if (loginAnalysis?.mode === "full") {
+          useRoadmapStore.getState().setFromUpload(loginAnalysis.full);
+          return { redirectTo: "/roadmap" };
+        }
         if (demoMode) {
-          if (demoResult?.mode === "full") {
-            useRoadmapStore.getState().setFromUpload(demoResult.full);
-          }
           return { redirectTo: "/roadmap" };
         }
 
@@ -106,13 +104,13 @@ export function useAuth() {
           id: displayId,
           email: userEmail,
           demoMode,
-          demoResult,
+          loginAnalysis,
         } = res.data;
         setAuth(token, uid, displayId, userEmail, demoMode);
         // Demo users skip the questionnaire — the login/register call runs the
         // pipeline server-side. Hydrate from the inline result when present.
-        if (demoMode && demoResult?.mode === "full") {
-          useRoadmapStore.getState().setFromUpload(demoResult.full);
+        if (demoMode && loginAnalysis?.mode === "full") {
+          useRoadmapStore.getState().setFromUpload(loginAnalysis.full);
         }
         return { redirectTo: demoMode ? "/roadmap" : undefined };
       } catch (err) {

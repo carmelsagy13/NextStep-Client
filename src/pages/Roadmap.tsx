@@ -695,14 +695,14 @@ const Roadmap = () => {
               {/* Every task on the step is done — offer a reassessment */}
               {isCurrentStage && showStepCompletePrompt && (
                 <div
-                  className="rounded-2xl border-2 border-primary/40 bg-primary/5 p-4 text-right"
+                  className="rounded-2xl border-2 border-primary/40 bg-primary/5 p-4"
                   dir="rtl"
                 >
-                  <div className="mb-2 flex items-center justify-end gap-2">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 shrink-0 text-primary" />
                     <p className="text-base font-bold leading-snug text-primary">
                       סיימתם את כל המשימות בשלב הזה!
                     </p>
-                    <Sparkles className="h-5 w-5 shrink-0 text-primary" />
                   </div>
                   <p className="mb-3 text-sm text-muted-foreground">
                     נעדכן את הנתונים מהבנק ונבדוק אם אפשר להעלות אתכם שלב.
@@ -712,17 +712,7 @@ const Roadmap = () => {
                       {syncError}
                     </p>
                   )}
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        setSyncError("");
-                        setDismissedCompletion(completionSignature);
-                      }}
-                      disabled={syncing}
-                    >
-                      לא עכשיו
-                    </Button>
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       onClick={runStepCompleteSync}
                       disabled={syncing}
@@ -734,6 +724,16 @@ const Roadmap = () => {
                         <RefreshCw className="h-4 w-4" />
                       )}
                       עדכון הנתונים שלי
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setSyncError("");
+                        setDismissedCompletion(completionSignature);
+                      }}
+                      disabled={syncing}
+                    >
+                      לא עכשיו
                     </Button>
                   </div>
                 </div>

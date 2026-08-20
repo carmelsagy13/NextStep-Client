@@ -48,6 +48,20 @@ export const UserGoalStatus = {
 export type UserGoalStatus =
   (typeof UserGoalStatus)[keyof typeof UserGoalStatus];
 
+/** Why the user marked a task as not relevant for them. */
+export const GoalDismissalReason = {
+  ALREADY_DONE: "already_done",
+  NO_BUDGET: "no_budget",
+  NO_TIME: "no_time",
+  RISK_MISMATCH: "risk_mismatch",
+  TOO_COMPLEX: "too_complex",
+  NOT_RELEVANT: "not_relevant",
+  OTHER: "other",
+} as const;
+
+export type GoalDismissalReason =
+  (typeof GoalDismissalReason)[keyof typeof GoalDismissalReason];
+
 export const RoadmapGoalType = {
   PERSONAL: "personal",
   MARKETING: "marketing",
@@ -94,6 +108,10 @@ export interface UserGoal {
   completedAtStep: number | null;
   removedAt: string | null;
   removalReason: string | null;
+  dismissalReason: GoalDismissalReason | null;
+  /** Free text the user typed, only present when dismissalReason is "other". */
+  dismissalNote: string | null;
+  dismissedAt: string | null;
   roadmapGoalId: string | null;
   dynamicParams: Record<string, unknown>;
   aiInsight: string | null;

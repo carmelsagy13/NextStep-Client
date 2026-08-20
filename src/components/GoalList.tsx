@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import {
   Target,
   Loader2,
@@ -8,13 +9,18 @@ import {
   X,
   BookOpen,
   ExternalLink,
+  ThumbsDown,
+  ChevronDown,
+  RotateCcw,
 } from "lucide-react";
 import { useRoadmapStore } from "../store/roadmapStore";
-import { updateGoal } from "../api/goals.api";
+import { dismissGoal, updateGoal } from "../api/goals.api";
 import { formatThousands, parseThousands } from "../lib/utils";
 import { goalStepId } from "../lib/goalStep";
+import { DISMISSAL_REASON_LABEL } from "../lib/goalDismissal";
 import MarketingGoalCard from "./MarketingGoalCard";
-import type { UserGoal } from "../types";
+import GoalDismissDialog from "./GoalDismissDialog";
+import type { GoalDismissalReason, UserGoal } from "../types";
 import { UserGoalStatus } from "../types";
 
 /** Interpolates {{key}} placeholders in a template using the dynamicParams object. */
@@ -73,11 +79,13 @@ function GoalItem({
   readOnly?: boolean;
 }) {
   const setGoalStatus = useRoadmapStore((s) => s.setGoalStatus);
+  const markGoalDismissed = useRoadmapStore((s) => s.markGoalDismissed);
   const updateGoalProgress = useRoadmapStore((s) => s.updateGoalProgress);
   const [toggling, setToggling] = useState(false);
   const [editingAmount, setEditingAmount] = useState(false);
   const [amountDraft, setAmountDraft] = useState("");
   const [savingAmount, setSavingAmount] = useState(false);
+  const [dismissOpen, setDismissOpen] = useState(false);
   const [error, setError] = useState("");
 
   const isCompleted = goal.status === UserGoalStatus.COMPLETED;
@@ -127,6 +135,32 @@ function GoalItem({
       setError("שגיאה בעדכון — נסה שוב");
     } finally {
       setToggling(false);
+    }
+  };
+
+  // Restores a task the user dismissed by mistake. The server also drops the
+  // recorded feedback, so it stops influencing future task selection.
+  const handleUndoDismiss = async () => {
+    setGoalStatus(goal.goalId, UserGoalStatus.ACTIVE); // optimistic
+    try {
+      await updateGoal(goal.goalId, { status: UserGoalStatus.ACTIVE });
+    } catch {
+      setGoalStatus(goal.goalId, UserGoalStatus.ABANDONED); // revert
+      toast.error("לא הצלחנו לשחזר את המשימה — נסו שוב");
+    }
+  };
+
+  const handleDismiss = async (reason: GoalDismissalReason, note?: string) => {
+    const prevStatus = goal.status;
+    markGoalDismissed(goal.goalId, reason, note); // optimistic
+    try {
+      await dismissGoal(goal.goalId, reason, note);
+      toast("המשימה הוסרה. תודה על המשוב!", {
+        action: { label: "ביטול", onClick: handleUndoDismiss },
+      });
+    } catch (err) {
+      setGoalStatus(goal.goalId, prevStatus); // revert
+      throw err; // keeps the dialog open so the user can retry
     }
   };
 
@@ -326,7 +360,27 @@ function GoalItem({
             )}
           </div>
         </div>
+
+        {/* renderGoal routes sponsored goals to MarketingGoalCard, so one never lands here. */}
+        {!readOnly && !isCompleted && (
+          <button
+            type="button"
+            onClick={() => setDismissOpen(true)}
+            aria-label="סמן את המשימה כלא רלוונטית"
+            title="לא רלוונטי עבורי"
+            className="shrink-0 text-gray-300 transition hover:text-gray-500 active:scale-95 dark:text-gray-600 dark:hover:text-gray-400"
+          >
+            <ThumbsDown className="h-4 w-4" />
+          </button>
+        )}
       </div>
+
+      <GoalDismissDialog
+        open={dismissOpen}
+        onOpenChange={setDismissOpen}
+        goalName={displayName}
+        onConfirm={handleDismiss}
+      />
 
       {/* Progress bar */}
       {!isCompleted && hasTarget && (
@@ -339,6 +393,76 @@ function GoalItem({
           </div>
           <p className="text-left text-[10px] text-gray-400">{progress}%</p>
         </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A task the user marked as not relevant. Kept reachable so a dismissal stays
+ * reversible long after the undo toast has gone.
+ */
+function DismissedGoalItem({
+  goal,
+  readOnly,
+}: {
+  goal: UserGoal;
+  readOnly?: boolean;
+}) {
+  const setGoalStatus = useRoadmapStore((s) => s.setGoalStatus);
+  const [restoring, setRestoring] = useState(false);
+
+  const displayName = renderDescription(goal.goalName, goal.dynamicParams ?? {});
+  const reasonLabel = goal.dismissalReason
+    ? DISMISSAL_REASON_LABEL[goal.dismissalReason]
+    : null;
+
+  const handleRestore = async () => {
+    if (restoring || readOnly) return;
+    setRestoring(true);
+    setGoalStatus(goal.goalId, UserGoalStatus.ACTIVE); // optimistic
+    try {
+      await updateGoal(goal.goalId, { status: UserGoalStatus.ACTIVE });
+    } catch {
+      setGoalStatus(goal.goalId, UserGoalStatus.ABANDONED); // revert
+      toast.error("לא הצלחנו לשחזר את המשימה — נסו שוב");
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  return (
+    <div
+      dir="rtl"
+      className="flex items-start justify-between gap-3 rounded-sm border border-dashed border-gray-200 bg-gray-50/60 px-4 py-3 dark:border-gray-700 dark:bg-gray-900/40"
+    >
+      <div className="min-w-0">
+        <p className="truncate text-sm text-gray-500 dark:text-gray-400">
+          {displayName}
+        </p>
+        {/* The free-text note is more specific than the generic "אחר" label. */}
+        {(goal.dismissalNote || reasonLabel) && (
+          <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+            {goal.dismissalNote || reasonLabel}
+          </p>
+        )}
+      </div>
+
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={handleRestore}
+          disabled={restoring}
+          aria-label="שחזור המשימה"
+          className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-gray-500 transition hover:text-primary active:scale-95 disabled:opacity-50 dark:text-gray-400"
+        >
+          {restoring ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RotateCcw className="h-3.5 w-3.5" />
+          )}
+          שחזור
+        </button>
       )}
     </div>
   );
@@ -393,6 +517,7 @@ export default function GoalList({
 }: GoalListProps = {}) {
   const allGoals = useRoadmapStore((s) => s.goals);
   const fallbackStepId = currentStepId ?? stepId ?? 1;
+  const [showDismissed, setShowDismissed] = useState(false);
 
   // Only show goals the user is currently working on (active) or has
   // finished (completed). Hide removed/abandoned/expired goals.
@@ -405,9 +530,21 @@ export default function GoalList({
     return true;
   });
 
+  // Tasks the user rejected. Only ones carrying a reason, so LLM-removed and
+  // legacy abandoned tasks stay hidden.
+  const dismissedGoals =
+    mode === "past"
+      ? []
+      : (allGoals ?? []).filter(
+          (g) =>
+            g.status === UserGoalStatus.ABANDONED &&
+            g.dismissalReason != null &&
+            (stepId == null || goalStepId(g, fallbackStepId) === stepId),
+        );
+
   const goals = orderGoals(visibleGoals);
 
-  if (goals.length === 0) return null;
+  if (goals.length === 0 && dismissedGoals.length === 0) return null;
 
   const trackedGoals = goals.filter((g) => !isMarketingGoal(g));
   const completed = trackedGoals.filter(
@@ -473,6 +610,35 @@ export default function GoalList({
             </h4>
           </div>
           {doneGoals.map(renderGoal)}
+        </div>
+      )}
+
+      {dismissedGoals.length > 0 && (
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => setShowDismissed((prev) => !prev)}
+            aria-expanded={showDismissed}
+            className="flex w-full items-center gap-2 text-sm font-semibold text-gray-500 transition hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            <ThumbsDown className="h-4 w-4" />
+            סומנו כלא רלוונטיות ({dismissedGoals.length})
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${showDismissed ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {showDismissed && (
+            <div className="mt-2.5 space-y-2">
+              {dismissedGoals.map((goal) => (
+                <DismissedGoalItem
+                  key={goal.goalId}
+                  goal={goal}
+                  readOnly={readOnly}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

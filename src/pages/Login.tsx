@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, AlertCircle, Eye, EyeOff, TrendingUp } from 'lucide-react';
 import { login } from '../api/auth.api';
 import { useAuthStore } from '../store/authStore';
+import { useRoadmapStore } from '../store/roadmapStore';
 import type { AuthResponse } from '../types';
 
 export default function Login() {
@@ -31,9 +32,22 @@ export default function Login() {
     setIsSubmitting(true);
     try {
       const { data } = await login(email.trim(), password);
-      const { accessToken, userId, id, email: userEmail, demoMode } =
-        data as AuthResponse;
+      const {
+        accessToken,
+        userId,
+        id,
+        email: userEmail,
+        demoMode,
+        loginAnalysis,
+      } = data as AuthResponse;
       setAuth(accessToken, userId, id, userEmail, demoMode);
+      // The server already ran the full pipeline during login (demo data in Demo
+      // Mode, live Open Finance data otherwise) — hydrate and skip /analyze.
+      if (loginAnalysis?.mode === 'full') {
+        useRoadmapStore.getState().setFromUpload(loginAnalysis.full);
+        navigate('/roadmap');
+        return;
+      }
       navigate(demoMode ? '/roadmap' : '/analyze');
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string }; status?: number } };

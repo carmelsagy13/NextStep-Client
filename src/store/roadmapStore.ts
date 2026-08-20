@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { RoadmapState, UserGoal } from "../types";
+import type { GoalDismissalReason, RoadmapState, UserGoal } from "../types";
 import { UserGoalStatus } from "../types";
 import { getCurrentStep } from "./currentStep";
 
@@ -49,6 +49,16 @@ interface RoadmapStore {
    * accordingly.
    */
   setGoalStatus: (goalId: string, status: UserGoalStatus) => void;
+
+  /**
+   * Mirror of POST /goals/dismiss: retires a task and records why the user
+   * rejected it, so the dismissed list renders without waiting for a refetch.
+   */
+  markGoalDismissed: (
+    goalId: string,
+    reason: GoalDismissalReason,
+    note?: string,
+  ) => void;
 
   /** Clear all analysis state (e.g. on logout) */
   reset: () => void;
@@ -106,6 +116,7 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
       goals: state.goals.map((g) => {
         if (g.goalId !== goalId) return g;
         const completed = status === UserGoalStatus.COMPLETED;
+        const reactivated = status === UserGoalStatus.ACTIVE;
         return {
           ...g,
           status,
@@ -115,8 +126,27 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
           completedAtStep: completed
             ? (g.completedAtStep ?? getCurrentStep())
             : null,
+          // The server drops the feedback when the user reactivates a task.
+          dismissalReason: reactivated ? null : g.dismissalReason,
+          dismissalNote: reactivated ? null : g.dismissalNote,
+          dismissedAt: reactivated ? null : g.dismissedAt,
         };
       }),
+    })),
+
+  markGoalDismissed: (goalId, reason, note) =>
+    set((state) => ({
+      goals: state.goals.map((g) =>
+        g.goalId === goalId
+          ? {
+              ...g,
+              status: UserGoalStatus.ABANDONED,
+              dismissalReason: reason,
+              dismissalNote: note ?? null,
+              dismissedAt: new Date().toISOString(),
+            }
+          : g,
+      ),
     })),
 
   reset: () => set({ roadmapState: null, goals: [] }),
