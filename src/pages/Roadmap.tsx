@@ -35,8 +35,9 @@ import {
   getCurrentStep,
   refreshCurrentStep,
 } from "@/store/currentStep";
-import { resetAccountData } from "@/api/openfinance.api";
+import { resetAccountData, connectBankApi } from "@/api/openfinance.api";
 import { formatMoney } from "@/lib/utils";
+import { goalStepId } from "@/lib/goalStep";
 import { UserGoalStatus } from "@/types";
 import type { LossAversion, RoadmapState, RoadmapStep, UserGoal } from "@/types";
 
@@ -195,6 +196,31 @@ const Roadmap = () => {
     progressPercent: number;
     completedGoalIds: Set<string>;
   } | null>(null);
+
+  // Re-analysis offered once the user checks off every task on their step.
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState("");
+  const [dismissedCompletion, setDismissedCompletion] = useState<string | null>(
+    null,
+  );
+
+  const currentStepGoals = goals.filter(
+    (g) =>
+      (g.status === UserGoalStatus.ACTIVE ||
+        g.status === UserGoalStatus.COMPLETED) &&
+      goalStepId(g, currentStepId) === currentStepId,
+  );
+  const allCurrentStepGoalsDone =
+    currentStepGoals.length > 0 &&
+    currentStepGoals.every((g) => g.status === UserGoalStatus.COMPLETED);
+  // Identifies this exact set of finished tasks, so the prompt is offered once
+  // per set instead of returning on every refetch.
+  const completionSignature = currentStepGoals
+    .map((g) => g.goalId)
+    .sort()
+    .join("|");
+  const showStepCompletePrompt =
+    allCurrentStepGoalsDone && dismissedCompletion !== completionSignature;
 
   // Auth guard
   useEffect(() => {
@@ -426,6 +452,57 @@ const Roadmap = () => {
     setShowRefreshPanel((prev) => !prev);
   };
 
+  /**
+   * Re-runs the Open Finance analysis after every task on the step is done, so
+   * the backend can reassess and possibly advance the user. Same call the manual
+   * bank-sync button makes.
+   */
+  const runStepCompleteSync = async () => {
+    if (syncing) return;
+    setSyncError("");
+
+    const store = useRoadmapStore.getState();
+    preRefreshSnapshot.current = {
+      stepId: getCurrentStep(),
+      progressPercent: store.roadmapState?.progressPercent ?? 0,
+      completedGoalIds: new Set(
+        store.goals
+          .filter((g) => g.status === UserGoalStatus.COMPLETED)
+          .map((g) => g.goalId),
+      ),
+    };
+
+    setSyncing(true);
+    try {
+      const { data } = await connectBankApi();
+
+      if (data.stage === "CONNECTION_REQUIRED") {
+        window.open(data.connectionUrl, "_blank", "noopener,noreferrer");
+        setSyncError(
+          "נדרש אישור מהבנק — השלימו את החיבור בחלון שנפתח ואז נסו שוב.",
+        );
+        return;
+      }
+
+      setFromUpload(data.analysis);
+      await handleRefreshSuccess();
+      // Offer this set only once, even if the reassessment left it unchanged.
+      setDismissedCompletion(completionSignature);
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      setSyncError(
+        error.response?.data?.message ??
+          error.message ??
+          "עדכון הנתונים נכשל. אנא נסו שוב מאוחר יותר.",
+      );
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   /** Wipe all financial data and return to the setup flow. */
   const handleResetData = async () => {
     if (resetting) return;
@@ -513,6 +590,7 @@ const Roadmap = () => {
       <Confetti fire={showConfetti} onComplete={() => setShowConfetti(false)} />
       {/* Demo Mode: automated LLM generation loading overlay */}
       <DemoLoadingModal open={demoGenerating} errorMsg={demoError} />
+      <DemoLoadingModal open={syncing} />
       <AppNavbar />
 
       {/* Demo Mode error state — shown instead of a blank page when the
@@ -604,14 +682,61 @@ const Roadmap = () => {
                 </p>
               </div>
 
-              {/* Current stage — active goals to work on */}
+              {/* Current stage — active goals plus what's already been done */}
               {isCurrentStage && (
                 <GoalList
                   stepId={selectedStepId}
                   currentStepId={currentStepId}
-                  mode="current"
+                  mode="all"
                   animatingGoalIds={animatingGoals}
                 />
+              )}
+
+              {/* Every task on the step is done — offer a reassessment */}
+              {isCurrentStage && showStepCompletePrompt && (
+                <div
+                  className="rounded-2xl border-2 border-primary/40 bg-primary/5 p-4 text-right"
+                  dir="rtl"
+                >
+                  <div className="mb-2 flex items-center justify-end gap-2">
+                    <p className="text-base font-bold leading-snug text-primary">
+                      סיימתם את כל המשימות בשלב הזה!
+                    </p>
+                    <Sparkles className="h-5 w-5 shrink-0 text-primary" />
+                  </div>
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    נעדכן את הנתונים מהבנק ונבדוק אם אפשר להעלות אתכם שלב.
+                  </p>
+                  {syncError && (
+                    <p className="mb-3 text-sm text-destructive" role="alert">
+                      {syncError}
+                    </p>
+                  )}
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setSyncError("");
+                        setDismissedCompletion(completionSignature);
+                      }}
+                      disabled={syncing}
+                    >
+                      לא עכשיו
+                    </Button>
+                    <Button
+                      onClick={runStepCompleteSync}
+                      disabled={syncing}
+                      className="gap-2"
+                    >
+                      {syncing ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4" />
+                      )}
+                      עדכון הנתונים שלי
+                    </Button>
+                  </div>
+                </div>
               )}
 
               {/* Completed stage — shown at 100% with the past tasks */}

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { RoadmapState, UserGoal } from "../types";
 import { UserGoalStatus } from "../types";
+import { getCurrentStep } from "./currentStep";
 
 // Accept both snake_case (defined in UploadAnalysisResponse) and camelCase
 // variants so the store is resilient to either backend serialisation format.
@@ -44,7 +45,8 @@ interface RoadmapStore {
 
   /**
    * Set a goal's status directly (e.g. toggling a task between COMPLETED and
-   * ACTIVE from the task card). Manages `completedAt` accordingly.
+   * ACTIVE from the task card). Manages `completedAt`/`completedAtStep`
+   * accordingly.
    */
   setGoalStatus: (goalId: string, status: UserGoalStatus) => void;
 
@@ -68,20 +70,21 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
 
   updateGoalProgress: (goalId, currentAmount) =>
     set((state) => ({
-      goals: state.goals.map((g) =>
-        g.goalId === goalId
-          ? {
-              ...g,
-              currentAmount,
-              status:
-                g.targetAmount != null &&
-                Number(g.targetAmount) > 0 &&
-                currentAmount >= Number(g.targetAmount)
-                  ? UserGoalStatus.COMPLETED
-                  : g.status,
-            }
-          : g,
-      ),
+      goals: state.goals.map((g) => {
+        if (g.goalId !== goalId) return g;
+        const reachedTarget =
+          g.targetAmount != null &&
+          Number(g.targetAmount) > 0 &&
+          currentAmount >= Number(g.targetAmount);
+        if (!reachedTarget) return { ...g, currentAmount };
+        return {
+          ...g,
+          currentAmount,
+          status: UserGoalStatus.COMPLETED,
+          completedAt: g.completedAt ?? new Date().toISOString(),
+          completedAtStep: g.completedAtStep ?? getCurrentStep(),
+        };
+      }),
     })),
 
   markGoalComplete: (goalId) =>
@@ -91,7 +94,8 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
           ? {
               ...g,
               status: UserGoalStatus.COMPLETED,
-              completedAt: new Date().toISOString(),
+              completedAt: g.completedAt ?? new Date().toISOString(),
+              completedAtStep: g.completedAtStep ?? getCurrentStep(),
             }
           : g,
       ),
@@ -99,18 +103,20 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
 
   setGoalStatus: (goalId, status) =>
     set((state) => ({
-      goals: state.goals.map((g) =>
-        g.goalId === goalId
-          ? {
-              ...g,
-              status,
-              completedAt:
-                status === UserGoalStatus.COMPLETED
-                  ? (g.completedAt ?? new Date().toISOString())
-                  : null,
-            }
-          : g,
-      ),
+      goals: state.goals.map((g) => {
+        if (g.goalId !== goalId) return g;
+        const completed = status === UserGoalStatus.COMPLETED;
+        return {
+          ...g,
+          status,
+          completedAt: completed
+            ? (g.completedAt ?? new Date().toISOString())
+            : null,
+          completedAtStep: completed
+            ? (g.completedAtStep ?? getCurrentStep())
+            : null,
+        };
+      }),
     })),
 
   reset: () => set({ roadmapState: null, goals: [] }),

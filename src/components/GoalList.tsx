@@ -12,6 +12,7 @@ import {
 import { useRoadmapStore } from "../store/roadmapStore";
 import { updateGoal } from "../api/goals.api";
 import { formatThousands, parseThousands } from "../lib/utils";
+import { goalStepId } from "../lib/goalStep";
 import MarketingGoalCard from "./MarketingGoalCard";
 import type { UserGoal } from "../types";
 import { UserGoalStatus } from "../types";
@@ -64,9 +65,12 @@ function resolveInfoLink(
 function GoalItem({
   goal,
   isAnimating,
+  readOnly,
 }: {
   goal: UserGoal;
   isAnimating?: boolean;
+  /** Viewing a step the user has moved past — history, not something to edit. */
+  readOnly?: boolean;
 }) {
   const setGoalStatus = useRoadmapStore((s) => s.setGoalStatus);
   const updateGoalProgress = useRoadmapStore((s) => s.updateGoalProgress);
@@ -108,7 +112,7 @@ function GoalItem({
   // Toggle the task between COMPLETED and ACTIVE. Optimistically flips the
   // status in the store and reverts if the API call fails.
   const handleToggleComplete = async () => {
-    if (toggling) return;
+    if (toggling || readOnly) return;
     setError("");
     setToggling(true);
     const prevStatus = goal.status;
@@ -175,14 +179,25 @@ function GoalItem({
             role="checkbox"
             aria-checked={isCompleted}
             aria-label={
-              isCompleted ? "סמן את המשימה כלא הושלמה" : "סמן את המשימה כהושלמה"
+              readOnly
+                ? "משימה משלב קודם — לא ניתן לשנות"
+                : isCompleted
+                  ? "סמן את המשימה כלא הושלמה"
+                  : "סמן את המשימה כהושלמה"
             }
+            title={readOnly ? "משימה משלב קודם — לא ניתן לשנות" : undefined}
             onClick={handleToggleComplete}
-            disabled={toggling}
-            className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border flex items-center justify-center transition active:scale-95 disabled:opacity-50 ${
+            disabled={toggling || readOnly}
+            className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border flex items-center justify-center transition ${
+              readOnly
+                ? "cursor-not-allowed"
+                : "active:scale-95 disabled:opacity-50"
+            } ${
               isCompleted
                 ? "bg-primary border-primary"
-                : "border-gray-300 hover:border-primary dark:border-gray-600"
+                : readOnly
+                  ? "border-gray-300 dark:border-gray-600"
+                  : "border-gray-300 hover:border-primary dark:border-gray-600"
             }`}
           >
             {toggling ? (
@@ -291,7 +306,7 @@ function GoalItem({
                       </>
                     )}
                   </p>
-                  {!isCompleted && (
+                  {!isCompleted && !readOnly && (
                     <button
                       type="button"
                       onClick={startEditAmount}
@@ -336,8 +351,11 @@ interface GoalListProps {
   stepId?: number;
   /** The user's current roadmap step. */
   currentStepId?: number;
-  /** "current" shows active goals; "past" shows completed goals. */
-  mode?: "current" | "past";
+  /**
+   * "current" shows active goals, "past" shows completed goals, "all" shows
+   * active goals followed by the ones already completed on that step.
+   */
+  mode?: "current" | "past" | "all";
   /** Overrides the default header text. */
   title?: string;
 }
@@ -369,17 +387,22 @@ function orderGoals(goals: UserGoal[]): UserGoal[] {
 export default function GoalList({
   animatingGoalIds,
   stepId,
+  currentStepId,
   mode = "current",
   title,
 }: GoalListProps = {}) {
   const allGoals = useRoadmapStore((s) => s.goals);
+  const fallbackStepId = currentStepId ?? stepId ?? 1;
 
   // Only show goals the user is currently working on (active) or has
   // finished (completed). Hide removed/abandoned/expired goals.
   const visibleGoals = (allGoals ?? []).filter((g) => {
-    if (stepId != null && g.roadmapGoal?.stepId !== stepId) return false;
-    if (mode === "past") return g.status === UserGoalStatus.COMPLETED;
-    return g.status === UserGoalStatus.ACTIVE;
+    const isCompleted = g.status === UserGoalStatus.COMPLETED;
+    if (!isCompleted && g.status !== UserGoalStatus.ACTIVE) return false;
+    if (mode === "past" && !isCompleted) return false;
+    if (mode === "current" && isCompleted) return false;
+    if (stepId != null && goalStepId(g, fallbackStepId) !== stepId) return false;
+    return true;
   });
 
   const goals = orderGoals(visibleGoals);
@@ -390,6 +413,38 @@ export default function GoalList({
   const completed = trackedGoals.filter(
     (g) => g.status === UserGoalStatus.COMPLETED,
   ).length;
+
+  // In "all" mode finished tasks move to their own section so checking one off
+  // keeps it on screen instead of making it vanish from the step.
+  const openGoals =
+    mode === "all"
+      ? goals.filter((g) => g.status !== UserGoalStatus.COMPLETED)
+      : goals;
+  const doneGoals =
+    mode === "all"
+      ? goals.filter((g) => g.status === UserGoalStatus.COMPLETED)
+      : [];
+
+  // Steps the user has moved past are history: their tasks stay visible but
+  // can no longer be toggled or edited.
+  const readOnly =
+    stepId != null && currentStepId != null && stepId !== currentStepId;
+
+  const renderGoal = (goal: UserGoal) =>
+    goal.marketing ? (
+      <MarketingGoalCard
+        key={goal.goalId}
+        goal={goal}
+        marketing={goal.marketing}
+      />
+    ) : (
+      <GoalItem
+        key={goal.goalId}
+        goal={goal}
+        isAnimating={animatingGoalIds?.has(goal.goalId)}
+        readOnly={readOnly}
+      />
+    );
 
   return (
     <div className="w-full max-w-lg mx-auto space-y-3" dir="rtl">
@@ -407,23 +462,19 @@ export default function GoalList({
       </div>
 
       {/* Goal items */}
-      <div className="space-y-2.5">
-        {goals.map((goal) =>
-          goal.marketing ? (
-            <MarketingGoalCard
-              key={goal.goalId}
-              goal={goal}
-              marketing={goal.marketing}
-            />
-          ) : (
-            <GoalItem
-              key={goal.goalId}
-              goal={goal}
-              isAnimating={animatingGoalIds?.has(goal.goalId)}
-            />
-          ),
-        )}
-      </div>
+      <div className="space-y-2.5">{openGoals.map(renderGoal)}</div>
+
+      {doneGoals.length > 0 && (
+        <div className="space-y-2.5 pt-2">
+          <div className="flex items-center gap-2">
+            <Check className="h-4 w-4 text-primary" />
+            <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+              הושלמו בשלב הזה
+            </h4>
+          </div>
+          {doneGoals.map(renderGoal)}
+        </div>
+      )}
     </div>
   );
 }

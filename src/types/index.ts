@@ -87,7 +87,11 @@ export interface UserGoal {
   status: UserGoalStatus;
   priority: number;
   assignedAt: string | null;
+  /** Roadmap step the user was on when this task was assigned. */
+  assignedAtStep: number | null;
   completedAt: string | null;
+  /** Roadmap step the user was on when this task was completed. */
+  completedAtStep: number | null;
   removedAt: string | null;
   removalReason: string | null;
   roadmapGoalId: string | null;
