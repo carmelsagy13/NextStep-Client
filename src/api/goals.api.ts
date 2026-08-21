@@ -39,3 +39,7 @@ export const dismissGoal = (
     reason,
     ...(note ? { note } : {}),
   });
+
+/** Pass `null` to bring a deferred task back immediately. */
+export const snoozeGoal = (goalId: string, snoozedUntil: string | null) =>
+  apiClient.post("/goals/snooze", { goalId, snoozedUntil });

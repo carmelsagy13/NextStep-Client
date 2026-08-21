@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 import FinancialTip from "./FinancialTip";
+import StairsLoader from "./StairsLoader";
 
 /**
  * Loading phases shown while an LLM analysis request is in flight.
@@ -56,7 +56,7 @@ export default function AnalysisLoadingIndicator({ active }: Props) {
       dir="rtl"
     >
       <div className="flex items-center gap-3">
-        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-blue-600" />
+        <StairsLoader className="text-primary" />
         <p
           key={phaseIndex}
           className="text-sm font-medium text-gray-700 transition-opacity dark:text-gray-200"
@@ -74,7 +74,7 @@ export default function AnalysisLoadingIndicator({ active }: Props) {
         aria-valuenow={LOADING_PHASES[phaseIndex].progress}
       >
         <div
-          className="h-full rounded-sm bg-blue-600 transition-all duration-700 ease-out"
+          className="h-full rounded-sm bg-primary transition-all duration-700 ease-out"
           style={{ width: `${LOADING_PHASES[phaseIndex].progress}%` }}
         />
       </div>

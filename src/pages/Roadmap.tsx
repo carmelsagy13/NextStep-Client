@@ -24,6 +24,7 @@ import DataLoadSection from "@/components/DataLoadSection";
 import DemoLoadingModal from "@/components/DemoLoadingModal";
 import GoalList from "@/components/GoalList";
 import Confetti from "@/components/Confetti";
+import StairsLoader from "@/components/StairsLoader";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/authStore";
 import { useRoadmapStore } from "@/store/roadmapStore";
@@ -479,7 +480,7 @@ const Roadmap = () => {
       if (data.stage === "CONNECTION_REQUIRED") {
         window.open(data.connectionUrl, "_blank", "noopener,noreferrer");
         setSyncError(
-          "נדרש אישור מהבנק — השלימו את החיבור בחלון שנפתח ואז נסו שוב.",
+          "נדרש אישור מהבנק — השלם את החיבור בחלון שנפתח ואז נסה שוב.",
         );
         return;
       }
@@ -496,7 +497,7 @@ const Roadmap = () => {
       setSyncError(
         error.response?.data?.message ??
           error.message ??
-          "עדכון הנתונים נכשל. אנא נסו שוב מאוחר יותר.",
+          "עדכון הנתונים נכשל. אנא נסה שוב מאוחר יותר.",
       );
     } finally {
       setSyncing(false);
@@ -528,7 +529,7 @@ const Roadmap = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <StairsLoader size="lg" className="text-primary" />
           <p className="text-sm text-muted-foreground">
             טוען את הפרופיל שלך...
           </p>
@@ -701,11 +702,11 @@ const Roadmap = () => {
                   <div className="mb-2 flex items-center gap-2">
                     <Sparkles className="h-5 w-5 shrink-0 text-primary" />
                     <p className="text-base font-bold leading-snug text-primary">
-                      סיימתם את כל המשימות בשלב הזה!
+                      סיימת את כל המשימות בשלב הזה!
                     </p>
                   </div>
                   <p className="mb-3 text-sm text-muted-foreground">
-                    נעדכן את הנתונים מהבנק ונבדוק אם אפשר להעלות אתכם שלב.
+                    נעדכן את הנתונים מהבנק ונבדוק אם אפשר להעלות אותך שלב.
                   </p>
                   {syncError && (
                     <p className="mb-3 text-sm text-destructive" role="alert">
@@ -897,19 +898,6 @@ const Roadmap = () => {
                         <DataLoadSection onSuccess={handleRefreshSuccess} />
                       </>
                     )}
-
-                    {/* Test confetti */}
-                    <div className="pt-3 border-t border-border">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowConfetti(true)}
-                        className="w-full flex items-center gap-2 text-xs"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        בדיקת קונפטי
-                      </Button>
-                    </div>
 
                     {/* Reset all data */}
                     <div className="pt-3 border-t border-border space-y-2">

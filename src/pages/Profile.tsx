@@ -5,13 +5,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { getProfile, getProfileHistory } from "@/api/profile.api";
 import type { Profile as UserProfileData, UserProfileHistory } from "@/types";
 import ProfileGoals from "@/components/ProfileGoals";
+import StairsLoader from "@/components/StairsLoader";
 import {
   Mail,
   TrendingUp,
   PieChart,
   GraduationCap,
   Target,
-  Loader2,
   ArrowRight,
   IdCard,
 } from "lucide-react";
@@ -121,7 +121,7 @@ const Profile = () => {
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <StairsLoader size="lg" className="text-primary" label="טוען" />
             </div>
           ) : (
             <>

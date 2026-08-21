@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Loader2, UploadCloud, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import StairsLoader from '@/components/StairsLoader';
 import { useAuthStore } from '../store/authStore';
 import { useRoadmapStore } from '../store/roadmapStore';
 import FinancialReportUpload from '../components/FinancialReportUpload';
@@ -103,7 +104,7 @@ export default function Analyze() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+          <StairsLoader size="lg" className="text-gray-500" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading your profile…</p>
         </div>
       </div>

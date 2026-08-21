@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
+import StairsLoader from "@/components/StairsLoader";
 // Note: in RTL, "back" reads to the right and "forward" reads to the left.
 
 import { useAuth } from "@/hooks/useAuth";
@@ -77,7 +78,7 @@ const Questionnaire = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <StairsLoader size="lg" className="text-primary" label="טוען" />
       </div>
     );
   }
@@ -91,7 +92,7 @@ const Questionnaire = () => {
       >
         <div className="text-center space-y-4">
           <p className="text-muted-foreground">
-            לא הצלחנו לטעון את השאלון. נסו שוב.
+            לא הצלחנו לטעון את השאלון. נסה שוב.
           </p>
           <Button onClick={() => refetch()}>נסה שוב</Button>
         </div>
@@ -113,7 +114,7 @@ const Questionnaire = () => {
           <div className="space-y-2">
             <h1 className="font-display text-3xl font-bold">הכל מוכן! 🎉</h1>
             <p className="text-muted-foreground">
-              בנינו עבורכם מסלול פיננסי מותאם אישית.
+              בנינו עבורך מסלול פיננסי מותאם אישית.
             </p>
           </div>
           <Link to="/roadmap">
@@ -168,7 +169,7 @@ const Questionnaire = () => {
         if (failingIndex >= 0) setScreenIndex(failingIndex);
         setSubmitError("יש לתקן את השדות המסומנים ולשלוח שוב.");
       } else {
-        setSubmitError("השליחה נכשלה. נסו שוב.");
+        setSubmitError("השליחה נכשלה. נסה שוב.");
       }
       setIsSubmitting(false);
     }
@@ -222,7 +223,7 @@ const Questionnaire = () => {
           <div className="relative">
             {isSubmitting && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 rounded-xl">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <StairsLoader size="lg" className="text-primary" label="שולח" />
               </div>
             )}
 

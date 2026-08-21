@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShieldAlert, Loader2, RotateCcw } from "lucide-react";
+import { ShieldAlert, RotateCcw } from "lucide-react";
+import StairsLoader from "@/components/StairsLoader";
 import { Button } from "@/components/ui/button";
 import AppNavbar from "@/components/app/AppNavbar";
 import DataLoadSection from "@/components/DataLoadSection";
@@ -121,7 +122,7 @@ const Admin = () => {
           {/* Step: resetting */}
           {step === "resetting" && (
             <div className="flex flex-col items-center gap-3 py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <StairsLoader size="lg" className="text-primary" />
               <p className="text-sm text-muted-foreground">מאפס נתונים...</p>
             </div>
           )}

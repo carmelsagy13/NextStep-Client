@@ -33,8 +33,8 @@ const AppNavbar = () => {
         {/* Left: Dark/Light mode toggle */}
         <button
           onClick={toggleTheme}
-          className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-muted transition-colors"
-          aria-label="Toggle theme"
+          className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-muted transition-colors"
+          aria-label={theme === "dark" ? "מעבר למצב בהיר" : "מעבר למצב כהה"}
         >
           {theme === "dark" ? (
             <Sun className="w-5 h-5" />
@@ -51,8 +51,10 @@ const AppNavbar = () => {
         {/* Right: hamburger — always visible */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-muted transition-colors"
-          aria-label="Toggle menu"
+          className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-muted transition-colors"
+          aria-label={isOpen ? "סגירת התפריט" : "פתיחת התפריט"}
+          aria-expanded={isOpen}
+          aria-controls="app-nav-menu"
         >
           {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -69,7 +71,8 @@ const AppNavbar = () => {
 
           {/* Menu panel */}
           <div
-            className="absolute top-14 left-0 right-0 z-50 bg-background border-b border-border shadow-xl"
+            id="app-nav-menu"
+            className="absolute top-14 left-0 right-0 z-50 max-h-[calc(100vh-3.5rem)] overflow-y-auto bg-background border-b border-border shadow-xl"
             dir="rtl"
           >
             {/* User info */}
@@ -142,14 +145,14 @@ const AppNavbar = () => {
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 text-foreground hover:bg-muted transition-colors"
                 >
-                  <span className="font-medium">Log In</span>
+                  <span className="font-medium">התחברות</span>
                 </Link>
                 <Link
                   to="/register"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 text-primary hover:bg-muted transition-colors"
                 >
-                  <span className="font-medium">Get Started</span>
+                  <span className="font-medium">הרשמה</span>
                 </Link>
               </div>
             )}

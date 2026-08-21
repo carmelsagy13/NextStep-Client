@@ -60,6 +60,12 @@ interface RoadmapStore {
     note?: string,
   ) => void;
 
+  /**
+   * Mirror of POST /goals/snooze: defers a task to `snoozedUntil`, or brings it
+   * back when passed null. The status is untouched, as on the server.
+   */
+  setGoalSnooze: (goalId: string, snoozedUntil: string | null) => void;
+
   /** Clear all analysis state (e.g. on logout) */
   reset: () => void;
 }
@@ -126,6 +132,8 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
           completedAtStep: completed
             ? (g.completedAtStep ?? getCurrentStep())
             : null,
+          // Any lifecycle move settles the task, so a pending deferral is moot.
+          snoozedUntil: null,
           // The server drops the feedback when the user reactivates a task.
           dismissalReason: reactivated ? null : g.dismissalReason,
           dismissalNote: reactivated ? null : g.dismissalNote,
@@ -144,8 +152,16 @@ export const useRoadmapStore = create<RoadmapStore>((set) => ({
               dismissalReason: reason,
               dismissalNote: note ?? null,
               dismissedAt: new Date().toISOString(),
+              snoozedUntil: null,
             }
           : g,
+      ),
+    })),
+
+  setGoalSnooze: (goalId, snoozedUntil) =>
+    set((state) => ({
+      goals: state.goals.map((g) =>
+        g.goalId === goalId ? { ...g, snoozedUntil } : g,
       ),
     })),
 

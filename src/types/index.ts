@@ -72,6 +72,16 @@ export const RoadmapGoalType = {
 export type RoadmapGoalType =
   (typeof RoadmapGoalType)[keyof typeof RoadmapGoalType];
 
+/** How much work a task demands. Authored per template, refined per user. */
+export const GoalEffortLevel = {
+  QUICK: "quick",
+  MODERATE: "moderate",
+  PROJECT: "project",
+} as const;
+
+export type GoalEffortLevel =
+  (typeof GoalEffortLevel)[keyof typeof GoalEffortLevel];
+
 /**
  * Partner branding + commercial terms for a sponsored goal. Present only while
  * the backing offer is live — the server nulls it out and reports the goal as
@@ -112,9 +122,18 @@ export interface UserGoal {
   /** Free text the user typed, only present when dismissalReason is "other". */
   dismissalNote: string | null;
   dismissedAt: string | null;
+  /**
+   * Future date the user deferred this task to. The status stays "active" —
+   * the server clears this on its own once the date passes.
+   */
+  snoozedUntil: string | null;
   roadmapGoalId: string | null;
   dynamicParams: Record<string, unknown>;
   aiInsight: string | null;
+  /** Why the system picked this task for this user, citing their own figures. */
+  whyNow: string | null;
+  /** Already resolved server-side: the task's override, else the template's. */
+  effortLevel: GoalEffortLevel | null;
   sourceProfileHistoryId: string | null;
   goalType?: RoadmapGoalType;
   marketing?: MarketingGoalMeta | null;
@@ -132,6 +151,7 @@ export interface RoadmapGoal {
   requiredContext: string | null;
   isActive: boolean;
   priority: number;
+  effortLevel: GoalEffortLevel | null;
 }
 
 // Roadmap

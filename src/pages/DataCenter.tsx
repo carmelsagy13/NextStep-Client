@@ -66,7 +66,11 @@ const DataCenter = () => {
         <div className="max-w-lg mx-auto" dir="rtl">
           <h1 className="font-display text-2xl font-bold mb-2">מרכז הידע</h1>
           <p className="text-muted-foreground mb-6">
-            למד והרחב את הידע הפיננסי שלך
+            ידע פיננסי הוא הצעד הראשון{" "}
+            <strong className="font-semibold text-foreground">
+              והחשוב ביותר
+            </strong>{" "}
+            בדרך להתקדמות ולעצמאות כלכלית
           </p>
 
           {/* Categories grid */}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Target, Pencil, Loader2, X, Plus, Trash2 } from "lucide-react";
+import StairsLoader from "@/components/StairsLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -479,7 +480,7 @@ export default function ProfileGoals() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+          <StairsLoader className="text-primary" label="טוען" />
         </div>
       ) : (
         <div className="space-y-3">

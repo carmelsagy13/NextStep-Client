@@ -65,7 +65,7 @@ export default function GoalDismissDialog({
       );
       handleOpenChange(false);
     } catch {
-      setError("לא הצלחנו לשמור את המשוב — נסו שוב");
+      setError("לא הצלחנו לשמור את המשוב — נסה שוב");
     } finally {
       setSubmitting(false);
     }

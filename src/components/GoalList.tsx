@@ -12,15 +12,20 @@ import {
   ThumbsDown,
   ChevronDown,
   RotateCcw,
+  Clock,
+  HelpCircle,
 } from "lucide-react";
 import { useRoadmapStore } from "../store/roadmapStore";
-import { dismissGoal, updateGoal } from "../api/goals.api";
+import { dismissGoal, snoozeGoal, updateGoal } from "../api/goals.api";
 import { formatThousands, parseThousands } from "../lib/utils";
 import { goalStepId } from "../lib/goalStep";
 import { DISMISSAL_REASON_LABEL } from "../lib/goalDismissal";
+import { EFFORT_BADGE_CLASS, EFFORT_LABEL, EFFORT_ORDER } from "../lib/goalEffort";
+import { formatSnoozeDate, isSnoozed } from "../lib/goalSnooze";
 import MarketingGoalCard from "./MarketingGoalCard";
 import GoalDismissDialog from "./GoalDismissDialog";
-import type { GoalDismissalReason, UserGoal } from "../types";
+import GoalSnoozeDialog from "./GoalSnoozeDialog";
+import type { GoalDismissalReason, GoalEffortLevel, UserGoal } from "../types";
 import { UserGoalStatus } from "../types";
 
 /** Interpolates {{key}} placeholders in a template using the dynamicParams object. */
@@ -80,12 +85,15 @@ function GoalItem({
 }) {
   const setGoalStatus = useRoadmapStore((s) => s.setGoalStatus);
   const markGoalDismissed = useRoadmapStore((s) => s.markGoalDismissed);
+  const setGoalSnooze = useRoadmapStore((s) => s.setGoalSnooze);
   const updateGoalProgress = useRoadmapStore((s) => s.updateGoalProgress);
   const [toggling, setToggling] = useState(false);
   const [editingAmount, setEditingAmount] = useState(false);
   const [amountDraft, setAmountDraft] = useState("");
   const [savingAmount, setSavingAmount] = useState(false);
   const [dismissOpen, setDismissOpen] = useState(false);
+  const [snoozeOpen, setSnoozeOpen] = useState(false);
+  const [showWhy, setShowWhy] = useState(false);
   const [error, setError] = useState("");
 
   const isCompleted = goal.status === UserGoalStatus.COMPLETED;
@@ -146,7 +154,7 @@ function GoalItem({
       await updateGoal(goal.goalId, { status: UserGoalStatus.ACTIVE });
     } catch {
       setGoalStatus(goal.goalId, UserGoalStatus.ABANDONED); // revert
-      toast.error("לא הצלחנו לשחזר את המשימה — נסו שוב");
+      toast.error("לא הצלחנו לשחזר את המשימה — נסה שוב");
     }
   };
 
@@ -160,6 +168,26 @@ function GoalItem({
       });
     } catch (err) {
       setGoalStatus(goal.goalId, prevStatus); // revert
+      throw err; // keeps the dialog open so the user can retry
+    }
+  };
+
+  const handleSnooze = async (snoozedUntil: string) => {
+    const prev = goal.snoozedUntil;
+    setGoalSnooze(goal.goalId, snoozedUntil); // optimistic
+    try {
+      await snoozeGoal(goal.goalId, snoozedUntil);
+      toast(`נדבר על זה שוב ב־${formatSnoozeDate(snoozedUntil)}`, {
+        action: {
+          label: "ביטול",
+          onClick: () => {
+            setGoalSnooze(goal.goalId, null);
+            void snoozeGoal(goal.goalId, null);
+          },
+        },
+      });
+    } catch (err) {
+      setGoalSnooze(goal.goalId, prev); // revert
       throw err; // keeps the dialog open so the user can retry
     }
   };
@@ -241,21 +269,53 @@ function GoalItem({
             ) : null}
           </button>
           <div>
-            <p
-              className={`text-sm font-semibold ${
-                isCompleted
-                  ? "text-gray-400 line-through dark:text-gray-500"
-                  : "text-gray-900 dark:text-gray-100"
-              }`}
-            >
-              {displayName}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p
+                className={`text-sm font-semibold ${
+                  isCompleted
+                    ? "text-gray-400 line-through dark:text-gray-500"
+                    : "text-gray-900 dark:text-gray-100"
+                }`}
+              >
+                {displayName}
+              </p>
+              {goal.effortLevel && !isCompleted && (
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${EFFORT_BADGE_CLASS[goal.effortLevel]}`}
+                >
+                  {EFFORT_LABEL[goal.effortLevel]}
+                </span>
+              )}
+            </div>
 
             {/* Description from template */}
             {description && !isCompleted && (
               <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
                 {description}
               </p>
+            )}
+
+            {/* The system's own reasoning, hidden until asked for. */}
+            {goal.whyNow && !isCompleted && (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowWhy((prev) => !prev)}
+                  aria-expanded={showWhy}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition hover:text-primary dark:text-gray-400"
+                >
+                  <HelpCircle className="h-3.5 w-3.5" />
+                  למה זו המשימה שלי?
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform ${showWhy ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {showWhy && (
+                  <p className="mt-1.5 rounded-sm bg-gray-50 px-3 py-2 text-xs leading-relaxed text-gray-600 dark:bg-gray-800/60 dark:text-gray-300">
+                    {goal.whyNow}
+                  </p>
+                )}
+              </div>
             )}
 
             {/* Link to an explanatory article */}
@@ -267,7 +327,7 @@ function GoalItem({
                   className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
                 >
                   <BookOpen className="h-3.5 w-3.5" />
-                  למדו עוד על המשימה הזו
+                  למד עוד על המשימה הזו
                 </Link>
               ) : (
                 <a
@@ -277,7 +337,7 @@ function GoalItem({
                   className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  למדו עוד על המשימה הזו
+                  למד עוד על המשימה הזו
                 </a>
               ))}
 
@@ -363,15 +423,26 @@ function GoalItem({
 
         {/* renderGoal routes sponsored goals to MarketingGoalCard, so one never lands here. */}
         {!readOnly && !isCompleted && (
-          <button
-            type="button"
-            onClick={() => setDismissOpen(true)}
-            aria-label="סמן את המשימה כלא רלוונטית"
-            title="לא רלוונטי עבורי"
-            className="shrink-0 text-gray-300 transition hover:text-gray-500 active:scale-95 dark:text-gray-600 dark:hover:text-gray-400"
-          >
-            <ThumbsDown className="h-4 w-4" />
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSnoozeOpen(true)}
+              aria-label="דחה את המשימה למועד מאוחר יותר"
+              title="לא עכשיו"
+              className="text-gray-300 transition hover:text-gray-500 active:scale-95 dark:text-gray-600 dark:hover:text-gray-400"
+            >
+              <Clock className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setDismissOpen(true)}
+              aria-label="סמן את המשימה כלא רלוונטית"
+              title="לא רלוונטי עבורי"
+              className="text-gray-300 transition hover:text-gray-500 active:scale-95 dark:text-gray-600 dark:hover:text-gray-400"
+            >
+              <ThumbsDown className="h-4 w-4" />
+            </button>
+          </div>
         )}
       </div>
 
@@ -380,6 +451,13 @@ function GoalItem({
         onOpenChange={setDismissOpen}
         goalName={displayName}
         onConfirm={handleDismiss}
+      />
+
+      <GoalSnoozeDialog
+        open={snoozeOpen}
+        onOpenChange={setSnoozeOpen}
+        goalName={displayName}
+        onConfirm={handleSnooze}
       />
 
       {/* Progress bar */}
@@ -425,7 +503,7 @@ function DismissedGoalItem({
       await updateGoal(goal.goalId, { status: UserGoalStatus.ACTIVE });
     } catch {
       setGoalStatus(goal.goalId, UserGoalStatus.ABANDONED); // revert
-      toast.error("לא הצלחנו לשחזר את המשימה — נסו שוב");
+      toast.error("לא הצלחנו לשחזר את המשימה — נסה שוב");
     } finally {
       setRestoring(false);
     }
@@ -462,6 +540,73 @@ function DismissedGoalItem({
             <RotateCcw className="h-3.5 w-3.5" />
           )}
           שחזור
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A task the user parked for later. Shows when it is due back and lets them
+ * pull it forward, so a deferral never feels like a task that vanished.
+ */
+function SnoozedGoalItem({
+  goal,
+  readOnly,
+}: {
+  goal: UserGoal;
+  readOnly?: boolean;
+}) {
+  const setGoalSnooze = useRoadmapStore((s) => s.setGoalSnooze);
+  const [restoring, setRestoring] = useState(false);
+
+  const displayName = renderDescription(goal.goalName, goal.dynamicParams ?? {});
+
+  const handleRestore = async () => {
+    if (restoring || readOnly) return;
+    const prev = goal.snoozedUntil;
+    setRestoring(true);
+    setGoalSnooze(goal.goalId, null); // optimistic
+    try {
+      await snoozeGoal(goal.goalId, null);
+    } catch {
+      setGoalSnooze(goal.goalId, prev); // revert
+      toast.error("לא הצלחנו להחזיר את המשימה — נסה שוב");
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  return (
+    <div
+      dir="rtl"
+      className="flex items-start justify-between gap-3 rounded-sm border border-dashed border-gray-200 bg-gray-50/60 px-4 py-3 dark:border-gray-700 dark:bg-gray-900/40"
+    >
+      <div className="min-w-0">
+        <p className="truncate text-sm text-gray-500 dark:text-gray-400">
+          {displayName}
+        </p>
+        {goal.snoozedUntil && (
+          <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+            תחזור ב־{formatSnoozeDate(goal.snoozedUntil)}
+          </p>
+        )}
+      </div>
+
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={handleRestore}
+          disabled={restoring}
+          aria-label="החזרת המשימה לרשימה"
+          className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-gray-500 transition hover:text-primary active:scale-95 disabled:opacity-50 dark:text-gray-400"
+        >
+          {restoring ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RotateCcw className="h-3.5 w-3.5" />
+          )}
+          החזרה
         </button>
       )}
     </div>
@@ -518,17 +663,31 @@ export default function GoalList({
   const allGoals = useRoadmapStore((s) => s.goals);
   const fallbackStepId = currentStepId ?? stepId ?? 1;
   const [showDismissed, setShowDismissed] = useState(false);
+  const [showSnoozed, setShowSnoozed] = useState(false);
+  const [effortFilter, setEffortFilter] = useState<GoalEffortLevel | null>(null);
 
   // Only show goals the user is currently working on (active) or has
   // finished (completed). Hide removed/abandoned/expired goals.
   const visibleGoals = (allGoals ?? []).filter((g) => {
     const isCompleted = g.status === UserGoalStatus.COMPLETED;
     if (!isCompleted && g.status !== UserGoalStatus.ACTIVE) return false;
+    if (isSnoozed(g)) return false;
     if (mode === "past" && !isCompleted) return false;
     if (mode === "current" && isCompleted) return false;
     if (stepId != null && goalStepId(g, fallbackStepId) !== stepId) return false;
     return true;
   });
+
+  // Tasks the user parked for later. Still ACTIVE, just not due yet.
+  const snoozedGoals =
+    mode === "past"
+      ? []
+      : (allGoals ?? []).filter(
+          (g) =>
+            g.status === UserGoalStatus.ACTIVE &&
+            isSnoozed(g) &&
+            (stepId == null || goalStepId(g, fallbackStepId) === stepId),
+        );
 
   // Tasks the user rejected. Only ones carrying a reason, so LLM-removed and
   // legacy abandoned tasks stay hidden.
@@ -544,7 +703,12 @@ export default function GoalList({
 
   const goals = orderGoals(visibleGoals);
 
-  if (goals.length === 0 && dismissedGoals.length === 0) return null;
+  if (
+    goals.length === 0 &&
+    dismissedGoals.length === 0 &&
+    snoozedGoals.length === 0
+  )
+    return null;
 
   const trackedGoals = goals.filter((g) => !isMarketingGoal(g));
   const completed = trackedGoals.filter(
@@ -561,6 +725,16 @@ export default function GoalList({
     mode === "all"
       ? goals.filter((g) => g.status === UserGoalStatus.COMPLETED)
       : [];
+
+  // Chips only earn their space once there is a real mix to sort through.
+  const availableEfforts = EFFORT_ORDER.filter((level) =>
+    openGoals.some((g) => g.effortLevel === level),
+  );
+  const showEffortFilter = openGoals.length >= 3 && availableEfforts.length > 1;
+  const shownGoals =
+    showEffortFilter && effortFilter
+      ? openGoals.filter((g) => g.effortLevel === effortFilter)
+      : openGoals;
 
   // Steps the user has moved past are history: their tasks stay visible but
   // can no longer be toggled or edited.
@@ -599,7 +773,41 @@ export default function GoalList({
       </div>
 
       {/* Goal items */}
-      <div className="space-y-2.5">{openGoals.map(renderGoal)}</div>
+      {showEffortFilter && (
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => setEffortFilter(null)}
+            aria-pressed={effortFilter === null}
+            className={`rounded-full border px-3 py-1 text-xs transition ${
+              effortFilter === null
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-gray-200 text-gray-500 hover:border-primary/50 dark:border-gray-700 dark:text-gray-400"
+            }`}
+          >
+            הכל
+          </button>
+          {availableEfforts.map((level) => (
+            <button
+              key={level}
+              type="button"
+              onClick={() =>
+                setEffortFilter((prev) => (prev === level ? null : level))
+              }
+              aria-pressed={effortFilter === level}
+              className={`rounded-full border px-3 py-1 text-xs transition ${
+                effortFilter === level
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-gray-200 text-gray-500 hover:border-primary/50 dark:border-gray-700 dark:text-gray-400"
+              }`}
+            >
+              {EFFORT_LABEL[level]}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="space-y-2.5">{shownGoals.map(renderGoal)}</div>
 
       {doneGoals.length > 0 && (
         <div className="space-y-2.5 pt-2">
@@ -610,6 +818,35 @@ export default function GoalList({
             </h4>
           </div>
           {doneGoals.map(renderGoal)}
+        </div>
+      )}
+
+      {snoozedGoals.length > 0 && (
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => setShowSnoozed((prev) => !prev)}
+            aria-expanded={showSnoozed}
+            className="flex w-full items-center gap-2 text-sm font-semibold text-gray-500 transition hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            <Clock className="h-4 w-4" />
+            נדחו למועד מאוחר יותר ({snoozedGoals.length})
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${showSnoozed ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {showSnoozed && (
+            <div className="mt-2.5 space-y-2">
+              {snoozedGoals.map((goal) => (
+                <SnoozedGoalItem
+                  key={goal.goalId}
+                  goal={goal}
+                  readOnly={readOnly}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
