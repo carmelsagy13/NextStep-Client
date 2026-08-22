@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { getSnapshot, getEvents } from '../api/finance.api';
 import { getRoadmap } from '../api/roadmap.api';
 import { getGoals, createGoal, deleteGoal } from '../api/goals.api';
-import { getNotifications } from '../api/notifications.api';
 
 type Fetcher = () => Promise<{ data: unknown }>;
 
@@ -11,7 +10,6 @@ const endpoints: Record<string, Fetcher> = {
   'GET /events': getEvents,
   'GET /roadmap': getRoadmap,
   'GET /goals': getGoals,
-  'GET /notifications': getNotifications,
 };
 
 export default function DataTest() {

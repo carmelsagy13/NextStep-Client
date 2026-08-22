@@ -8,12 +8,12 @@ export interface AuthResponse {
   /** When true, the client should run the automated Demo Mode flow. */
   demoMode?: boolean;
   /**
-   * Present on the first Demo Mode login (no profile yet): the login call runs
-   * the full pipeline synchronously and returns the result inline. Undefined on
-   * subsequent logins, where a lightweight sync runs server-side in the
-   * background.
+   * Result of the full LLM pipeline that every login runs server-side (demo
+   * data in Demo Mode, live Open Finance data otherwise). Undefined when that
+   * run failed — login still succeeds, the client just has no roadmap to
+   * hydrate.
    */
-  demoResult?: DemoTriggerResponse;
+  loginAnalysis?: DemoTriggerResponse;
 }
 
 // Financial Snapshot
@@ -289,21 +289,6 @@ export interface UserProfileHistory {
   stateDescription: string;
   llmReasoning: string;
   createdAt: string;
-}
-
-// Notification
-export interface UserNotification {
-  notificationId: string;
-  userId: string;
-  templateId: string;
-  isRead: boolean;
-  sentAt: string;
-  template: {
-    templateId: string;
-    title: string;
-    body: string;
-    triggerType: string;
-  };
 }
 
 // Aspirations (overarching financial goals) — dedicated store + REST endpoints.
