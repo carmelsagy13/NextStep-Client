@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle, Link2 } from "lucide-react";
 import StairsLoader from "@/components/StairsLoader";
 // Note: in RTL, "back" reads to the right and "forward" reads to the left.
 
@@ -10,6 +10,9 @@ import {
   getQuestionnaire,
   submitQuestionnaireResponses,
 } from "@/api/questionnaire.api";
+import { connectBankApi } from "@/api/openfinance.api";
+import { useRoadmapStore } from "@/store/roadmapStore";
+import DemoLoadingModal from "@/components/DemoLoadingModal";
 import { useQuestionnaireEngine } from "@/hooks/useQuestionnaireEngine";
 import { DynamicScreen } from "@/components/questionnaire/DynamicScreen";
 import { byOrderIndex, DEFAULT_LANG } from "@/lib/questionnaireEngine";
@@ -67,10 +70,49 @@ const Questionnaire = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
+  // Open Finance + LLM run that starts automatically once the answers are in.
+  const [analysisStatus, setAnalysisStatus] = useState<
+    "idle" | "running" | "consent" | "error"
+  >("idle");
+  const [analysisError, setAnalysisError] = useState("");
+  const [consentUrl, setConsentUrl] = useState("");
+  const setFromUpload = useRoadmapStore((s) => s.setFromUpload);
+
   // Scroll back to the top whenever the user moves to another screen/stage.
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [screenIndex, isComplete]);
+  }, [screenIndex, isComplete, analysisStatus]);
+
+  /** Pulls the user's Open Finance data and generates the roadmap via the LLM. */
+  const runAnalysis = async () => {
+    setAnalysisError("");
+    setAnalysisStatus("running");
+    try {
+      const { data } = await connectBankApi();
+
+      if (data.stage === "CONNECTION_REQUIRED") {
+        setConsentUrl(data.connectionUrl);
+        setAnalysisStatus("consent");
+        window.open(data.connectionUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      setFromUpload(data.analysis);
+      setAnalysisStatus("idle");
+      setIsComplete(true);
+    } catch (err) {
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      setAnalysisError(
+        error.response?.data?.message ??
+          error.message ??
+          "לא הצלחנו להביא את הנתונים הפיננסיים שלך.",
+      );
+      setAnalysisStatus("error");
+    }
+  };
 
   if (!isAuthenticated) return null;
 
@@ -95,6 +137,86 @@ const Questionnaire = () => {
             לא הצלחנו לטעון את השאלון. נסה שוב.
           </p>
           <Button onClick={() => refetch()}>נסה שוב</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Bank consent required before the analysis can run.
+  if (analysisStatus === "consent") {
+    return (
+      <div
+        className="min-h-screen bg-background flex items-center justify-center p-4"
+        dir="rtl"
+      >
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+            <Link2 className="w-10 h-10 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="font-display text-2xl font-bold">
+              נדרש אישור מהבנק
+            </h1>
+            <p className="text-muted-foreground">
+              פתחנו עבורך את דף האישור של Open Finance בלשונית חדשה. לאחר שתאשר
+              את החיבור, חזור לכאן והמשך.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <Button
+              size="lg"
+              className="w-full h-12 text-base"
+              onClick={runAnalysis}
+            >
+              אישרתי — בנה לי את המסלול
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              onClick={() =>
+                window.open(consentUrl, "_blank", "noopener,noreferrer")
+              }
+            >
+              פתח שוב את דף האישור
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Analysis failed — let the user retry without redoing the questionnaire.
+  if (analysisStatus === "error") {
+    return (
+      <div
+        className="min-h-screen bg-background flex items-center justify-center p-4"
+        dir="rtl"
+      >
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+            <AlertCircle className="w-10 h-10 text-destructive" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="font-display text-2xl font-bold">
+              בניית המסלול נכשלה
+            </h1>
+            <p className="text-muted-foreground">{analysisError}</p>
+          </div>
+          <div className="space-y-3">
+            <Button
+              size="lg"
+              className="w-full h-12 text-base"
+              onClick={runAnalysis}
+            >
+              נסה שוב
+            </Button>
+            <Link to="/setup" className="block">
+              <Button variant="ghost" size="sm" className="w-full">
+                טען נתונים בדרך אחרת
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -155,7 +277,8 @@ const Questionnaire = () => {
     setIsSubmitting(true);
     try {
       await submitQuestionnaireResponses(engine.compile());
-      setIsComplete(true);
+      setIsSubmitting(false);
+      await runAnalysis();
     } catch (error) {
       const fieldErrors = extractFieldErrors(error);
       if (fieldErrors.length > 0) {
@@ -177,6 +300,9 @@ const Questionnaire = () => {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
+      {/* LLM roadmap generation runs right after the final answer is saved. */}
+      <DemoLoadingModal open={analysisStatus === "running"} />
+
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container max-w-6xl mx-auto px-4">

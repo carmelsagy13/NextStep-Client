@@ -205,8 +205,11 @@ const Roadmap = () => {
     null,
   );
 
+  // Sponsored (marketing) goals are excluded: they are never "completed" by the
+  // user, so counting them would block the prompt forever.
   const currentStepGoals = goals.filter(
     (g) =>
+      g.marketing == null &&
       (g.status === UserGoalStatus.ACTIVE ||
         g.status === UserGoalStatus.COMPLETED) &&
       goalStepId(g, currentStepId) === currentStepId,

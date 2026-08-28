@@ -10,8 +10,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { he, enUS } from "date-fns/locale";
+import type { Locale } from "date-fns";
 import type { Lang, Question } from "@/types/questionnaire";
 import {
   byOrderIndex,
@@ -27,6 +29,67 @@ interface DynamicFieldProps {
   question: Question;
   engine: QuestionnaireEngine;
   lang: Lang;
+}
+
+interface DatePickerFieldProps {
+  value: Date | null;
+  onChange: (date: Date | undefined) => void;
+  locale: Locale;
+  lang: Lang;
+  dir: "rtl" | "ltr";
+  invalid: boolean;
+}
+
+/** Date button + calendar popover that dismisses itself once a day is picked. */
+function DatePickerField({
+  value,
+  onChange,
+  locale,
+  lang,
+  dir,
+  invalid,
+}: DatePickerFieldProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          dir={dir}
+          aria-invalid={invalid}
+          className={cn(
+            "w-full justify-start gap-2 font-normal",
+            !value && "text-muted-foreground",
+          )}
+        >
+          <CalendarIcon className="h-4 w-4" />
+          {value
+            ? format(value, "PPP", { locale })
+            : lang === "he"
+              ? "בחר תאריך"
+              : "Pick a date"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          locale={locale}
+          captionLayout="dropdown-buttons"
+          fromYear={1920}
+          toYear={new Date().getFullYear() + 50}
+          selected={value ?? undefined}
+          defaultMonth={value ?? undefined}
+          onSelect={(date) => {
+            onChange(date);
+            setOpen(false);
+          }}
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 /**
@@ -166,44 +229,17 @@ export function DynamicField({ question, engine, lang }: DynamicFieldProps) {
 
       case "DATE": {
         const dateLocale = lang === "he" ? he : enUS;
-        const selectedDate = parseDateISO(value as string | undefined);
         return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                dir={dir}
-                aria-invalid={!!error}
-                className={cn(
-                  "w-full justify-start gap-2 font-normal",
-                  !selectedDate && "text-muted-foreground",
-                )}
-              >
-                <CalendarIcon className="h-4 w-4" />
-                {selectedDate
-                  ? format(selectedDate, "PPP", { locale: dateLocale })
-                  : lang === "he"
-                    ? "בחר תאריך"
-                    : "Pick a date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                locale={dateLocale}
-                captionLayout="dropdown-buttons"
-                fromYear={1920}
-                toYear={new Date().getFullYear() + 50}
-                selected={selectedDate ?? undefined}
-                defaultMonth={selectedDate ?? undefined}
-                onSelect={(date) =>
-                  setAnswer(key, date ? formatDateISO(date) : undefined)
-                }
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <DatePickerField
+            dir={dir}
+            lang={lang}
+            locale={dateLocale}
+            invalid={!!error}
+            value={parseDateISO(value as string | undefined)}
+            onChange={(date) =>
+              setAnswer(key, date ? formatDateISO(date) : undefined)
+            }
+          />
         );
       }
 
